@@ -1359,9 +1359,6 @@ struct task_struct {
 #endif
 
 	struct mm_struct *mm, *active_mm;
-#ifdef CONFIG_COMPAT_BRK
-	unsigned brk_randomized:1;
-#endif
 	/* per-thread vma caching */
 	u32 vmacache_seqnum;
 	struct vm_area_struct *vmacache[VMACACHE_SIZE];
@@ -1384,6 +1381,11 @@ struct task_struct {
 	/* Revert to default priority/policy when forking */
 	unsigned sched_reset_on_fork:1;
 	unsigned sched_contributes_to_load:1;
+	unsigned sched_migrated:1;
+
+#ifdef CONFIG_COMPAT_BRK
+	unsigned brk_randomized:1;
+#endif
 
 	unsigned long atomic_flags; /* Flags needing atomic access. */
 
