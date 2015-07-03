@@ -520,6 +520,8 @@ static struct kvm *kvm_create_vm(unsigned long type)
 	list_add(&kvm->vm_list, &vm_list);
 	spin_unlock(&kvm_lock);
 
+	preempt_notifier_inc();
+
 	return kvm;
 
 out_err:
@@ -631,6 +633,7 @@ static void kvm_destroy_vm(struct kvm *kvm)
 	cleanup_srcu_struct(&kvm->irq_srcu);
 	cleanup_srcu_struct(&kvm->srcu);
 	kvm_arch_free_vm(kvm);
+	preempt_notifier_dec();
 	hardware_disable_all();
 	mmdrop(mm);
 }
