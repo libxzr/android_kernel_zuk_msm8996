@@ -2646,6 +2646,7 @@ void scheduler_tick(void)
 	curr->sched_class->task_tick(rq, curr, 0);
 	update_cpu_load_active(rq);
 	calc_global_load_tick(rq);
+	sched_freq_tick(cpu);
 	raw_spin_unlock(&rq->lock);
 
 	perf_event_task_tick();
@@ -2655,8 +2656,6 @@ void scheduler_tick(void)
 	trigger_load_balance(rq);
 #endif
 	rq_last_tick_reset(rq);
-
-	sched_freq_tick(cpu);
 }
 
 #ifdef CONFIG_NO_HZ_FULL
