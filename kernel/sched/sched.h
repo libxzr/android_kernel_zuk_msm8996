@@ -1718,9 +1718,9 @@ static const u32 prio_to_wmult[40] = {
 #define ENQUEUE_HEAD		0x08
 #define ENQUEUE_REPLENISH	0x10
 #ifdef CONFIG_SMP
-#define ENQUEUE_WAKING		0x20
+#define ENQUEUE_MIGRATED	0x20
 #else
-#define ENQUEUE_WAKING		0x00
+#define ENQUEUE_MIGRATED	0x00
 #endif
 #define ENQUEUE_MIGRATING	0x40
 
@@ -1752,7 +1752,7 @@ struct sched_class {
 	int  (*select_task_rq)(struct task_struct *p, int task_cpu, int sd_flag, int flags);
 	void (*migrate_task_rq)(struct task_struct *p, int next_cpu);
 
-	void (*task_waking) (struct task_struct *task);
+	void (*post_schedule) (struct rq *this_rq);
 	void (*task_woken) (struct rq *this_rq, struct task_struct *task);
 
 	void (*set_cpus_allowed)(struct task_struct *p,
