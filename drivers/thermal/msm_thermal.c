@@ -7505,7 +7505,7 @@ int __init msm_thermal_late_init(void)
 		return 0;
 
 	probe_therm_ddr_lm(msm_thermal_info.pdev);
-	if (num_possible_cpus() > 1)
+	if (num_possible_cpus() > 1 && core_control_enabled)
 		msm_thermal_add_cc_nodes();
 	msm_thermal_add_psm_nodes();
 	msm_thermal_add_vdd_rstr_nodes();
