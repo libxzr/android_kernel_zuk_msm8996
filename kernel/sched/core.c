@@ -367,6 +367,18 @@ task_rq_unlock(struct rq *rq, struct task_struct *p, unsigned long *flags)
 	raw_spin_unlock_irqrestore(&p->pi_lock, *flags);
 }
 
+struct rq *
+lock_rq_of(struct task_struct *p, unsigned long *flags)
+{
+	return task_rq_lock(p, flags);
+}
+
+void
+unlock_rq_of(struct rq *rq, struct task_struct *p, unsigned long *flags)
+{
+	task_rq_unlock(rq, p, flags);
+}
+
 /*
  * this_rq_lock - lock this runqueue and disable interrupts.
  */
