@@ -85,7 +85,7 @@ obj-$(CONFIG_ARCH_MSM8996) += msm_cpu_voltage.o
 obj-$(CONFIG_MSM_POWER) += msm_power.o
 obj-$(CONFIG_MSM_BGCOM) += bgcom_spi.o
 obj-$(CONFIG_WCD_DSP_GLINK) += wcd-dsp-glink.o
-
+obj-$(CONFIG_STATE_NOTIFIER)      += state_notifier.o
 ifdef CONFIG_MSM_SUBSYSTEM_RESTART
 	obj-y += subsystem_notif.o
 	obj-y += subsystem_restart.o
