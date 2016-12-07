@@ -11507,11 +11507,6 @@ static int tasha_set_decimator_rate(struct snd_soc_dai *dai,
 		dev_dbg(codec->dev, "%s: dai->id = %d, tx_port = %d",
 			__func__, dai->id, tx_port);
 
-		if ((tx_port < 0) || (tx_port == 12) || (tx_port >= 14)) {
-			dev_err(codec->dev, "%s: Invalid SLIM TX%u port. DAI ID: %d\n",
-				__func__, tx_port, dai->id);
-			return -EINVAL;
-		}
 		/* Find the SB TX MUX input - which decimator is connected */
 		if (tx_port < 4) {
 			tx_port_reg = WCD9335_CDC_IF_ROUTER_TX_MUX_CFG0;
