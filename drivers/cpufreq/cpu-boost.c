@@ -22,6 +22,8 @@
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/time.h>
+#include <linux/kthread.h>
+#include <linux/sched/rt.h>
 
 struct cpu_sync {
 	int cpu;
@@ -30,10 +32,8 @@ struct cpu_sync {
 };
 
 static DEFINE_PER_CPU(struct cpu_sync, sync_info);
-static struct workqueue_struct *cpu_boost_wq;
 
-static struct work_struct input_boost_work;
-
+static struct kthread_work input_boost_work;
 static unsigned int input_boost_enabled = 1;
 module_param(input_boost_enabled, uint, 0644);
 
@@ -49,6 +49,10 @@ static int boost_slot;
 
 static struct delayed_work input_boost_rem;
 static u64 last_input_time;
+
+static struct kthread_worker cpu_boost_worker;
+static struct task_struct *cpu_boost_worker_thread;
+
 #define MIN_INPUT_INTERVAL (150 * USEC_PER_MSEC)
 
 static int set_input_boost_freq(const char *buf, const struct kernel_param *kp)
@@ -188,7 +192,7 @@ static void do_input_boost_rem(struct work_struct *work)
 	update_policy_online();
 }
 
-static void do_input_boost(struct work_struct *work)
+static void do_input_boost(struct kthread_work *work)
 {
 	unsigned int i, ret;
 	struct cpu_sync *i_sync_info;
@@ -217,8 +221,7 @@ static void do_input_boost(struct work_struct *work)
 		stune_boost_active = true;
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
-	queue_delayed_work(cpu_boost_wq, &input_boost_rem,
-					msecs_to_jiffies(input_boost_ms));
+	schedule_delayed_work(&input_boost_rem, msecs_to_jiffies(input_boost_ms));
 }
 
 static void cpuboost_input_event(struct input_handle *handle,
@@ -233,10 +236,10 @@ static void cpuboost_input_event(struct input_handle *handle,
 	if (now - last_input_time < MIN_INPUT_INTERVAL)
 		return;
 
-	if (work_pending(&input_boost_work))
+	if (queuing_blocked(&cpu_boost_worker, &input_boost_work))
 		return;
 
-	queue_work(cpu_boost_wq, &input_boost_work);
+	queue_kthread_work(&cpu_boost_worker, &input_boost_work);
 	last_input_time = ktime_to_us(ktime_get());
 }
 
@@ -318,14 +321,35 @@ static struct input_handler cpuboost_input_handler = {
 
 static int cpu_boost_init(void)
 {
-	int cpu, ret;
+	int cpu, ret, i;
 	struct cpu_sync *s;
+	struct sched_param param = { .sched_priority = 2 };
+	cpumask_t sys_bg_mask;
 
-	cpu_boost_wq = alloc_workqueue("cpuboost_wq", WQ_HIGHPRI, 0);
-	if (!cpu_boost_wq)
+	/* Hardcode the cpumask to bind the kthread to it */
+	for (i = 0; i <= 2; i++) {
+		cpumask_set_cpu(i, &sys_bg_mask);
+	}
+
+	init_kthread_worker(&cpu_boost_worker);
+	cpu_boost_worker_thread = kthread_create(kthread_worker_fn,
+		&cpu_boost_worker, "cpu_boost_worker_thread");
+	if (IS_ERR(cpu_boost_worker_thread)) {
+		pr_err("cpu-boost: Failed to init kworker!\n");
 		return -EFAULT;
+	}
 
-	INIT_WORK(&input_boost_work, do_input_boost);
+	ret = sched_setscheduler(cpu_boost_worker_thread, SCHED_FIFO, &param);
+	if (ret)
+		pr_err("cpu-boost: Failed to set SCHED_FIFO!\n");
+
+	/* Now bind it to the cpumask */
+	kthread_bind_mask(cpu_boost_worker_thread, &sys_bg_mask);
+
+	/* Wake it up! */
+	wake_up_process(cpu_boost_worker_thread);
+
+	init_kthread_work(&input_boost_work, do_input_boost);
 	INIT_DELAYED_WORK(&input_boost_rem, do_input_boost_rem);
 
 	for_each_possible_cpu(cpu) {
