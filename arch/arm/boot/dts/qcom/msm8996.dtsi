@@ -186,7 +186,7 @@
 			fstab {
 				compatible = "android,fstab";
 				vendor: vendor {
-					compatible = "android,vendor";
+					compatible = "android,vendor,simple-bus";
 					dev = "/dev/block/platform/soc/7464900.sdhci/by-name/vendor";
 					type = "ext4";
 					mnt_flags = "ro,barrier=1,discard";
