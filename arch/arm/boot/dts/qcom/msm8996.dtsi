@@ -309,6 +309,13 @@
                        clock-output-names = "sleep_clk";
 		};
 	};
+	
+	vendor: vendor {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0 0 0 0xffffffff>;
+		compatible = "simple-bus";
+	};
 
 	soc: soc { };
 
