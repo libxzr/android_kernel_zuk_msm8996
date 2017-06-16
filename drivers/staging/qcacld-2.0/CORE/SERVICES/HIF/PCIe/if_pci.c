@@ -1414,7 +1414,8 @@ static inline void hif_pci_pm_debugfs(struct hif_pci_softc *sc, bool init)
 {
 	if (init) {
 		sc->pm_dentry = debugfs_create_file("cnss_runtime_pm",
-						S_IRUSR, NULL, sc,
+						S_IRUSR | S_IRGRP | S_IROTH,
+						NULL, sc,
 						&hif_pci_autopm_fops);
 		hif_dynamic_auto_pm_init(sc);
 	} else {
