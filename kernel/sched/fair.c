@@ -6096,7 +6096,6 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 	unsigned long target_capacity = ULONG_MAX;
 	unsigned long min_wake_util = ULONG_MAX;
 	unsigned long target_max_spare_cap = 0;
-	unsigned long target_util = ULONG_MAX;
 	unsigned long best_active_util = ULONG_MAX;
 	int best_idle_cstate = INT_MAX;
 	struct sched_domain *sd;
@@ -6325,7 +6324,6 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 
 			target_max_spare_cap = capacity_orig - new_util;
 			target_capacity = capacity_orig;
-			target_util = new_util;
 			target_cpu = i;
 		}
 
