@@ -878,4 +878,7 @@ config NXP_TFA98xx
         ---help---
           The NXP TFA98xx chip is used as a  smart PA Controller.
 
+config SOUND_CONTROL
+	bool "Sound control for wcd9335"
+
 endmenu
