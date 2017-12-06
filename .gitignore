@@ -113,6 +113,7 @@ all.config
 
 # Kdevelop4
 *.kdev4
+net/wireguard/
 
 # fetched Android config fragments
 android/configs/android-*.cfg
