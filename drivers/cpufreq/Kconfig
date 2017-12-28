@@ -141,6 +141,16 @@ config CPU_FREQ_DEFAULT_GOV_PWRUTILX
  	  have a look at the help section of that governor. The fallback
  	  governor will be 'performance'.
 
+config CPU_FREQ_DEFAULT_GOV_SCHEDALUCARD
+	bool "schedalucard"
+	depends on SMP
+	select CPU_FREQ_GOV_SCHEDALUCARD
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  Use the 'schedalucard' CPUFreq governor by default. If unsure,
+	  have a look at the help section of that governor. The fallback
+	  governor will be 'performance'.
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -282,6 +292,18 @@ config CPU_FREQ_GOV_HELIX
  	  frequency tipping point is at utilization/capacity equal to 80% in
  	  both cases. This governor also allows changing of the frequency tipping point by changing the bit shift value of the schedutil get_next_freq equation.
   	  If in doubt, say N.
+
+config CPU_FREQ_GOV_SCHEDALUCARD
+	bool "'schedalucard' cpufreq policy governor"
+	depends on CPU_FREQ && SMP
+	select CPU_FREQ_GOV_ATTR_SET
+	select IRQ_WORK
+	help
+	  This governor makes decisions based on the utilization data provided
+	  by the scheduler.  It sets the CPU frequency to be proportional to
+	  the utilization/capacity ratio coming from the scheduler. The
+	  frequency tipping point is at utilization/capacity equal to 80%
+	  by default.
 
 config CPU_UNDERCLOCK_FREQ_HHP
 	int "Performance+ cluster underclock freq(3 clusters only)"
