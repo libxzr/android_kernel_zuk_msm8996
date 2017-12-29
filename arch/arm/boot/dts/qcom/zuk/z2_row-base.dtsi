@@ -135,19 +135,18 @@
 			cc_logic,function-switch-gpio10 = <&tlmm 81 0x00>;
 		};
 
-		drv2605_haptics@5a{
-			status = "okay";
+		drv2605l@5a {
+			status = "ok";
 			compatible = "ti,drv2605l";
 			reg = <0x5a>;
+			input-mode = <1>;
+			loop-mode = <1>;
+			rtp-format = <0>;
+			actuator-type = <1>;
+			frequency = <240>;
+			vib-rated-mv = <946>;
+			vib-overdrive-mv = <3390>;
 			enable-gpio = <&tlmm 77 0x00>;
-			mode = <DRV260X_LRA_MODE>;
-			library-sel = <DRV260X_LIB_LRA>;
-			vib-rated-mv = <946>; /* not Vrms(1180mV), Vavg = Vrms * sqrt(1-(4*SampleTime + 300uS)*frequecty) */
-			vib-overdrive-mv = <3390>;/* Vpp */
-			vib-frequency = <240>;
-			pinctrl-names = "haptics_en_active", "haptics_en_sleep";
-			pinctrl-0 = <&haptics_en_active>;
-			pinctrl-1 = <&haptics_en_sleep>;
 		};
 	};
 
