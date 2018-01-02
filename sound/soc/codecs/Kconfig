@@ -877,5 +877,5 @@ config NXP_TFA98xx
         tristate "NXP TFA98xx Support"
         ---help---
           The NXP TFA98xx chip is used as a  smart PA Controller.
-
+          
 endmenu
