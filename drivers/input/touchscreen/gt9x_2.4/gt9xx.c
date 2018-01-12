@@ -20,6 +20,7 @@
 
 #include <linux/irq.h>
 #include "gt9xx.h"
+#include <linux/proximity_status.h>
 
 #if GTP_ICS_SLOT_REPORT
     #include <linux/input/mt.h>
@@ -104,13 +105,6 @@ static s32 gtp_bak_ref_proc(struct goodix_ts_data *ts, u8 mode);
 //********** For GT9XXF End **********//
 
 #if GTP_GESTURE_WAKEUP
-typedef enum
-{
-    DOZE_DISABLED = 0,
-    DOZE_ENABLED = 1,
-    DOZE_WAKEUP = 2,
-}DOZE_T;
-static DOZE_T doze_status = DOZE_DISABLED;
 static s8 gtp_enter_doze(struct goodix_ts_data *ts);
 #endif
 
