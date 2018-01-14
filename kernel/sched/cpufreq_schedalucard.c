@@ -243,7 +243,7 @@ static unsigned int little_up_rate_limit_us[LITTLE_NFREQS] = {
 	500,
 	500,
 	500,
-	200000,
+	300000,
 	500
 };
 
@@ -302,7 +302,7 @@ static unsigned int big_up_rate_limit_us[BIG_NFREQS] = {
 	500,
 	500,
 	500,
-	200000,
+	300000,
 	500
 };
 
