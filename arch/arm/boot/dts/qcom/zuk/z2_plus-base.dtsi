@@ -62,8 +62,8 @@
 	
 	i2c@7575000 {
 		cc_logic@01 {
-			cc_logic,usb-ss-gpio = <&tlmm 0 0x00>;
 			cc_logic,function-switch-gpio1 = <&tlmm 123 0x00>;
+			cc_logic,bypass-power-control = <&pm8994_gpios 10 0x00>;
 		};
 	};
 };

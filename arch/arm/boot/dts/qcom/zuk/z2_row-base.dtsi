@@ -130,6 +130,7 @@
 
 	i2c@7575000 {
 		cc_logic@01 {
+			cc_logic,usb-ss-gpio = <&tlmm 0 0x00>;
 			cc_logic,function-switch-gpio1 = <&tlmm 79 0x00>;
 			cc_logic,function-switch-gpio10 = <&tlmm 81 0x00>;
 		};
