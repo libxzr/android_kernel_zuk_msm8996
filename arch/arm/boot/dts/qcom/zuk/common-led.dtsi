@@ -5,7 +5,7 @@
 	qcom,duty-pcts1=[00 16];
 	qcom,lut-flags=<17>;
 	qcom,pause-lo=<3000>;
-	/delete-property/ inux,default-trigger;
+	/delete-property/ linux,default-trigger;
 };
 
 &green_led {
