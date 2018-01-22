@@ -5,6 +5,7 @@
 	qcom,duty-pcts1=[00 16];
 	qcom,lut-flags=<17>;
 	qcom,pause-lo=<3000>;
+	qcom,use-blink;
 	/delete-property/ linux,default-trigger;
 };
 
@@ -15,6 +16,7 @@
 	qcom,duty-pcts1=[00 16];
 	qcom,lut-flags=<17>;
 	qcom,pause-lo=<3000>;
+	qcom,use-blink;
 	/delete-property/ linux,default-trigger;
 };
 
@@ -25,5 +27,6 @@
 	qcom,duty-pcts1=[00 16];
 	qcom,lut-flags=<17>;
 	qcom,pause-lo=<3000>;
+	qcom,use-blink;
 	/delete-property/ linux,default-trigger;
 };
