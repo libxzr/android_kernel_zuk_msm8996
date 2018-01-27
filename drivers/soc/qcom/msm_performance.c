@@ -26,6 +26,8 @@
 #include <linux/input.h>
 #include <linux/kthread.h>
 
+
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static unsigned int use_input_evts_with_hi_slvt_detect;
 static struct mutex managed_cpus_lock;
 
@@ -101,6 +103,7 @@ static struct input_events *ip_evts;
 static struct trig_thr thr;
 /* Work to evaluate the onlining/offlining CPUs */
 struct delayed_work evaluate_hotplug_work;
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 
 /* To handle cpufreq min/max request */
 struct cpu_status {
@@ -109,6 +112,7 @@ struct cpu_status {
 };
 static DEFINE_PER_CPU(struct cpu_status, cpu_stats);
 
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static unsigned int num_online_managed(struct cpumask *mask);
 static int init_cluster_control(void);
 static int rm_high_pwr_cost_cpus(struct cluster *cl);
@@ -366,6 +370,7 @@ static const struct kernel_param_ops param_ops_managed_online_cpus = {
 device_param_cb(managed_online_cpus, &param_ops_managed_online_cpus,
 							NULL, 0444);
 #endif
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 /*
  * Userspace sends cpu#:min_freq_value to vote for min_freq_value as the new
  * scaling_min. To withdraw its vote it needs to enter cpu#:0
@@ -524,6 +529,7 @@ static const struct kernel_param_ops param_ops_cpu_max_freq = {
 };
 module_param_cb(cpu_max_freq, &param_ops_cpu_max_freq, NULL, 0644);
 
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static int set_ip_evt_trigger_threshold(const char *buf,
 		const struct kernel_param *kp)
 {
@@ -1553,6 +1559,7 @@ static unsigned int num_online_managed(struct cpumask *mask)
 
 	return cpumask_weight(&tmp_mask);
 }
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 
 static int perf_adjust_notify(struct notifier_block *nb, unsigned long val,
 							void *data)
@@ -1582,6 +1589,7 @@ static struct notifier_block perf_cpufreq_nb = {
 	.notifier_call = perf_adjust_notify,
 };
 
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static bool check_notify_status(void)
 {
 	int i;
@@ -2740,22 +2748,27 @@ static int init_events_group(void)
 
 	return 0;
 }
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 
 static int __init msm_performance_init(void)
 {
 	unsigned int cpu;
 
 	cpufreq_register_notifier(&perf_cpufreq_nb, CPUFREQ_POLICY_NOTIFIER);
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 	cpufreq_register_notifier(&perf_govinfo_nb, CPUFREQ_GOVINFO_NOTIFIER);
 	cpufreq_register_notifier(&perf_cputransitions_nb,
 					CPUFREQ_TRANSITION_NOTIFIER);
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 
 	for_each_present_cpu(cpu)
 		per_cpu(cpu_stats, cpu).max = UINT_MAX;
 
+#ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 	register_cpu_notifier(&msm_performance_cpu_notifier);
 
 	init_events_group();
+#endif // CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 
 	return 0;
 }

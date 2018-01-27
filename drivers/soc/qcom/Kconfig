@@ -794,6 +794,13 @@ config MSM_PERFORMANCE_HOTPLUG_ON
 	  compile out the nodes needed for core-control functionality through
 	  msm_performance.
 
+config MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
+	bool "Restrict msm_performance driver to cpufreq limits voting only"
+	depends on MSM_PERFORMANCE
+	help
+	 Setting this flag to true will restrict msm_performance driver's
+	 capabilities to setting min/max CPU frequencies only.
+
 config MSM_POWER
 	tristate "Power driver to manage system resources"
 	help
