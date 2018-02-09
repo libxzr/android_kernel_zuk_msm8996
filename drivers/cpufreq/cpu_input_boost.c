@@ -88,6 +88,11 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
+
+	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	do_stune_boost("top-app", dynamic_stune_boost);
+	#endif
+
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
 			      msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS)))
 		wake_up(&b->boost_waitq);
@@ -129,6 +134,10 @@ void cpu_input_boost_kick_max(unsigned int duration_ms)
 {
 	struct boost_drv *b = &boost_drv_g;
 
+	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	do_stune_boost("top-app", dynamic_stune_boost);
+	#endif
+
 	__cpu_input_boost_kick_max(b, duration_ms);
 }
 
@@ -139,6 +148,10 @@ static void input_unboost_worker(struct work_struct *work)
 
 	clear_bit(INPUT_BOOST, &b->state);
 	wake_up(&b->boost_waitq);
+
+	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	reset_stune_boost("top-app");
+	#endif
 }
 
 static void max_unboost_worker(struct work_struct *work)
@@ -148,6 +161,10 @@ static void max_unboost_worker(struct work_struct *work)
 
 	clear_bit(MAX_BOOST, &b->state);
 	wake_up(&b->boost_waitq);
+
+	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	reset_stune_boost("top-app");
+	#endif
 }
 
 static int cpu_boost_thread(void *data)
@@ -280,6 +297,10 @@ free_handle:
 
 static void cpu_input_boost_input_disconnect(struct input_handle *handle)
 {
+
+	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+	reset_stune_boost("top-app");
+	#endif
 	input_close_device(handle);
 	input_unregister_handle(handle);
 	kfree(handle);
