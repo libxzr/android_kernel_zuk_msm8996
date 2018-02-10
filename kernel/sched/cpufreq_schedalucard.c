@@ -83,8 +83,9 @@ struct acgov_cpu {
 	struct update_util_data update_util;
 	struct acgov_policy *sg_policy;
 
-	unsigned long iowait_boost;
-	unsigned long iowait_boost_max;
+	bool iowait_boost_pending;
+	unsigned int iowait_boost;
+	unsigned int iowait_boost_max;
 	u64 last_update;
 
 	/* The fields below are only needed when sharing a policy. */
@@ -243,7 +244,7 @@ static unsigned int little_up_rate_limit_us[LITTLE_NFREQS] = {
 	40000,
 	500,
 	500,
-	500,
+	20000,
 	500
 };
 
@@ -301,7 +302,7 @@ static unsigned int big_up_rate_limit_us[BIG_NFREQS] = {
 	500,
 	500,
 	500,
-	500,
+	20000,
 	500000,
 	500
 };
@@ -635,8 +636,9 @@ static void acgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 
 	*util = boosted_cpu_util(cpu);
 	if (likely(use_pelt()))
-		*util = min((*util + rt), max_cap);
+		*util = *util + rt;
 
+	*util = min(*util, max_cap);
 	*max = max_cap;
 }
 
@@ -649,30 +651,54 @@ static void acgov_set_iowait_boost(struct acgov_cpu *sg_cpu, u64 time,
 		return;
 
 	if (flags & SCHED_CPUFREQ_IOWAIT) {
-		sg_cpu->iowait_boost = sg_cpu->iowait_boost_max;
+		if (sg_cpu->iowait_boost_pending)
+			return;
+
+		sg_cpu->iowait_boost_pending = true;
+
+		if (sg_cpu->iowait_boost) {
+			sg_cpu->iowait_boost <<= 1;
+			if (sg_cpu->iowait_boost > sg_cpu->iowait_boost_max)
+				sg_cpu->iowait_boost = sg_cpu->iowait_boost_max;
+		} else {
+			sg_cpu->iowait_boost = sg_cpu->sg_policy->policy->min;
+		}
 	} else if (sg_cpu->iowait_boost) {
 		s64 delta_ns = time - sg_cpu->last_update;
 
 		/* Clear iowait_boost if the CPU apprears to have been idle. */
-		if (delta_ns > TICK_NSEC)
+		if (delta_ns > TICK_NSEC) {
 			sg_cpu->iowait_boost = 0;
+			sg_cpu->iowait_boost_pending = false;
+		}
 	}
 }
 
 static void acgov_iowait_boost(struct acgov_cpu *sg_cpu, unsigned long *util,
 			       unsigned long *max)
 {
-	unsigned long boost_util = sg_cpu->iowait_boost;
-	unsigned long boost_max = sg_cpu->iowait_boost_max;
+	unsigned int boost_util, boost_max;
 
-	if (!boost_util)
+	if (!sg_cpu->iowait_boost)
 		return;
+
+	if (sg_cpu->iowait_boost_pending) {
+		sg_cpu->iowait_boost_pending = false;
+	} else {
+		sg_cpu->iowait_boost >>= 1;
+		if (sg_cpu->iowait_boost < sg_cpu->sg_policy->policy->min) {
+			sg_cpu->iowait_boost = 0;
+			return;
+		}
+	}
+
+	boost_util = sg_cpu->iowait_boost;
+	boost_max = sg_cpu->iowait_boost_max;
 
 	if (*util * boost_max < *max * boost_util) {
 		*util = boost_util;
 		*max = boost_max;
 	}
-	sg_cpu->iowait_boost >>= 1;
 }
 
 #ifdef CONFIG_NO_HZ_COMMON
@@ -744,6 +770,7 @@ static unsigned int acgov_next_freq_shared(struct acgov_cpu *sg_cpu, u64 time)
 		delta_ns = time - j_sg_cpu->last_update;
 		if (delta_ns > TICK_NSEC) {
 			j_sg_cpu->iowait_boost = 0;
+			j_sg_cpu->iowait_boost_pending = false;
 			continue;
 		}
 		if (j_sg_cpu->flags & SCHED_CPUFREQ_DL)
@@ -1345,9 +1372,6 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 	unsigned int freq;
 	unsigned long max_cap;
 	unsigned long flags;
-#ifdef OVERWRITE_RATE_LIMIT_US
-	unsigned int lat;
-#endif
 	int i;
 
 	tunables = kzalloc(sizeof(*tunables), GFP_KERNEL);
@@ -1392,13 +1416,22 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 		spin_unlock_irqrestore(&tunables->capacity_lock, flags);
 #ifdef OVERWRITE_RATE_LIMIT_US
 		spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);		
-		lat = policy->cpuinfo.transition_latency / NSEC_PER_USEC;
-		for (i = 0; i < tunables->nelements; i++) {
-			tunables->up_rate_limit_us[i] = LATENCY_MULTIPLIER;
-			tunables->down_rate_limit_us[i] = LATENCY_MULTIPLIER;
-			if (lat) {
-				tunables->up_rate_limit_us[i] *= lat;
-				tunables->down_rate_limit_us[i] *= lat;
+		if (policy->up_transition_delay_us && policy->down_transition_delay_us) {
+			for (i = 0; i < tunables->nelements; i++) {
+				tunables->up_rate_limit_us[i] = policy->up_transition_delay_us;
+				tunables->down_rate_limit_us[i] = policy->down_transition_delay_us;
+			}
+		} else {
+			unsigned int lat;
+
+			lat = policy->cpuinfo.transition_latency / NSEC_PER_USEC;
+			for (i = 0; i < tunables->nelements; i++) {
+				tunables->up_rate_limit_us[i] = LATENCY_MULTIPLIER;
+				tunables->down_rate_limit_us[i] = LATENCY_MULTIPLIER;
+				if (lat) {
+					tunables->up_rate_limit_us[i] *= lat;
+					tunables->down_rate_limit_us[i] *= lat;
+				}
 			}
 		}
 		spin_unlock_irqrestore(&tunables->rate_limit_us_lock, flags);
