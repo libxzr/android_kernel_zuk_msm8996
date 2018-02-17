@@ -1224,7 +1224,7 @@ int cclogic_register(struct cclogic_chip *c)
 		goto err_ret;
 	}
 
-	pr_info("%s select chip:%s\n",__func__,c->chip_name);
+	pr_debug("%s select chip:%s\n",__func__,c->chip_name);
 
 	cclogic_priv->ops = c;
 	cclogic_priv->typec_version = c->typec_version;
@@ -1318,7 +1318,7 @@ static int cclogic_probe(struct i2c_client *client,
 	struct cclogic_dev *cclogic_dev = cclogic_priv;
 	struct cclogic_platform *platform_data;
 
-	pr_info("%s start\n", __func__);
+	pr_debug("%s start\n", __func__);
 
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev,"%s: i2c check failed\n", __func__);
@@ -1495,7 +1495,7 @@ static int cclogic_probe(struct i2c_client *client,
 		disable_irq(cclogic_dev->irq_plug);
 	}
 
-	pr_info("%s Success\n", __func__);
+	pr_debug("%s Success\n", __func__);
 
 	return 0;
 
@@ -1540,7 +1540,7 @@ static int cclogic_remove(struct i2c_client *client)
 {
 	struct cclogic_dev *cclogic_dev;
 
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 
 	cclogic_dev = i2c_get_clientdata(client);
 

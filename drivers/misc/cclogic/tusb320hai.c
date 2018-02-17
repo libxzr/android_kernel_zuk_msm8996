@@ -450,7 +450,7 @@ static struct cclogic_chip tusb320hai_chip = {
  */
 static int __init tusb320hai_init(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	return cclogic_register(&tusb320hai_chip);
 }
@@ -460,7 +460,7 @@ static int __init tusb320hai_init(void)
  */
 static void __exit tusb320hai_exit(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	cclogic_unregister(&tusb320hai_chip);
 	return;

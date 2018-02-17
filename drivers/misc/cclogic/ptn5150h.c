@@ -372,7 +372,7 @@ static struct cclogic_chip ptn5150_chip = {
  */
 static int __init ptn5150_init(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	return cclogic_register(&ptn5150_chip);
 }
@@ -382,7 +382,7 @@ static int __init ptn5150_init(void)
  */
 static void __exit ptn5150_exit(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	cclogic_unregister(&ptn5150_chip);
 	return;

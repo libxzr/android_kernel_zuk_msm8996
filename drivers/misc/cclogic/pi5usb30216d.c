@@ -237,7 +237,7 @@ static struct cclogic_chip pi5usb30216d_chip = {
  */
 static int __init pi5usb30216d_init(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	return cclogic_register(&pi5usb30216d_chip);
 }
@@ -247,7 +247,7 @@ static int __init pi5usb30216d_init(void)
  */
 static void __exit pi5usb30216d_exit(void)
 {
-	pr_info("cclogic:[%s][%d]\n", __func__, __LINE__);
+	pr_debug("cclogic:[%s][%d]\n", __func__, __LINE__);
 
 	cclogic_unregister(&pi5usb30216d_chip);
 	return;
