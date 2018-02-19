@@ -30,7 +30,7 @@ static int __init proc_cmdline_init(void)
 
 	strcpy(cmd, saved_command_line);
 
-	offset_addr = strstr(cmd, "androidboot.bootmode=usb_chg");
+	offset_addr = strstr(cmd, "androidboot.mode=usb_chg");
 	if (offset_addr) {
 		size_t i, len, offset;
 		len = strlen(cmd);
