@@ -10,6 +10,7 @@
 #include <linux/irq_work.h>
 
 #include "walt.h"
+#include "tune.h" 
 
 int sched_rr_timeslice = RR_TIMESLICE;
 int sysctl_sched_rr_timeslice = (MSEC_PER_SEC / HZ) * RR_TIMESLICE;
