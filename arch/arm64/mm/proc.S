@@ -127,12 +127,9 @@ ENDPROC(cpu_do_resume)
  *	- pgd_phys - physical address of new TTB
  */
 ENTRY(cpu_do_switch_mm)
-	mrs	x2, ttbr1_el1
 	mmid	x1, x1				// get mm->context.id
-	bfi	x2, x1, #48, #16		// set the ASID
-	msr	ttbr1_el1, x2			// in TTBR1 (since TCR.A1 is set)
-	isb
-	msr	ttbr0_el1, x0			// now update TTBR0
+	bfi	x0, x1, #48, #16		// set the ASID
+	msr	ttbr0_el1, x0			// set TTBR0
 	isb
 	ret
 ENDPROC(cpu_do_switch_mm)
@@ -185,7 +182,7 @@ ENTRY(__cpu_setup)
 	 * both user and kernel.
 	 */
 	ldr	x10, =TCR_TxSZ(VA_BITS) | TCR_CACHE_FLAGS | TCR_SMP_FLAGS | \
-			TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0 | TCR_A1
+			TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0
 	tcr_set_idmap_t0sz	x10, x9
 
 	/*
