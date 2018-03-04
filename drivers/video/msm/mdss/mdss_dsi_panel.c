@@ -23,24 +23,8 @@
 #include <linux/err.h>
 #include <linux/string.h>
 #ifdef CONFIG_MACH_ZUK_Z2_ROW
-#include <linux/irq.h>
-#include <linux/gpio.h>
-#include <linux/workqueue.h>
-#include <linux/time.h>
-
-#include <linux/fs.h>
-#include <linux/string.h>
-#include <asm/uaccess.h>
 #include "mdss_fb.h"
 #include "mdss_ams520.h"
-
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/gpio.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/regulator/consumer.h>
 #endif
 
 #include "mdss_dsi.h"
@@ -56,29 +40,7 @@
 #ifdef CONFIG_MACH_ZUK_Z2_ROW
 struct panel_effect_data lcd_data;
 
-int is_show_lcd_param = 0;
 extern struct msm_fb_data_type *mfd_priv;
-
-int show_lcd_param(struct dsi_cmd_desc *cmds, int cmd_cnt)
-{
-       int i, j;
-
-       printk("======================================= cmds_cnt %d =========================================\n", cmd_cnt);
-       for (i = 0; i < cmd_cnt; i++) {
-               printk("%2x %2x %2x %2x %2x %2x ", cmds[i].dchdr.dtype,
-                               cmds[i].dchdr.last,
-                               cmds[i].dchdr.vc,
-                               cmds[i].dchdr.ack,
-                               cmds[i].dchdr.wait,
-                               cmds[i].dchdr.dlen);
-               for (j = 0; j < cmds[i].dchdr.dlen; j++) {
-                       printk("%2x ", cmds[i].payload[j]);
-               }
-               printk("\n");
-       }
-       pr_debug("===========================================================================================\n");
-       return 0;
-}
 #endif
 
 DEFINE_LED_TRIGGER(bl_led_trigger);

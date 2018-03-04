@@ -84,7 +84,4 @@ int update_init_code(
 		struct mdss_dsi_ctrl_pdata*, 
 		struct panel_effect_data *, 
 		void (*)(struct mdss_dsi_ctrl_pdata *ctrl,struct dsi_panel_cmds *pcmds,u32 flags));
-int handle_lcd_effect_data(struct msm_fb_data_type *, struct panel_effect_data *, struct hal_panel_ctrl_data *);
-int get_effect_index_by_name(char *, struct panel_effect_data *);
-int get_mode_index_by_name(char *, struct panel_effect_data *);
 #endif
