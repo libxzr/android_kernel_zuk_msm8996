@@ -13659,6 +13659,50 @@ static ssize_t earpiece_gain_store(struct kobject *kobj,
 	return count;
 }
 
+struct snd_soc_codec *tfa98xx_codec_ptr;
+#include "tfa9891_genregs.h"
+#define TO_FIXED(e) e
+static ssize_t speaker_gain_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	u16 value;
+	s64 vol;
+
+	value = snd_soc_read(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR);
+	value >>= 8;
+	vol = TO_FIXED(value) / -2;
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", (int)vol);
+}
+
+static ssize_t speaker_gain_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int input;
+	u16 value = 0;
+	int volume_value;
+
+	sscanf(buf, "%d", &input);
+	if (input < 0 || input > 127)
+		input = 0;
+
+	value = snd_soc_read(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR);
+	volume_value = 2 * input;
+	if (volume_value > 255)
+		volume_value = 255;
+	value = (value & 0x00FF) | (u16)(volume_value << 8);
+
+	snd_soc_write(tfa98xx_codec_ptr, TFA98XX_AUDIO_CTR, value);
+
+	return count;
+}
+
+static struct kobj_attribute speaker_gain_attribute =
+	__ATTR(speaker_gain, 0664,
+		speaker_gain_show,
+		speaker_gain_store);
+
+
 static struct kobj_attribute earpiece_gain_attribute =
 	__ATTR(earpiece_gain, 0664,
 		earpiece_gain_show,
@@ -13668,6 +13712,7 @@ static struct attribute *sound_control_attrs[] = {
 		&headphone_gain_attribute.attr,
 		&mic_gain_attribute.attr,
 		&earpiece_gain_attribute.attr,
+		&speaker_gain_attribute.attr,
 		NULL,
 };
 
