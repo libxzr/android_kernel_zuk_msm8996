@@ -1,0 +1,10 @@
+config AiO_HotPlug
+       bool "An All in One HotPlug for Octa-Core big.LITTLE SoCs."
+       default n
+       help
+	    An All in One HotPlug for Quad, Hexa and Octa-Core SoCs as well as 
+	    Traditional and big.LITTLE SoCs developed by Shoaib Anwar a.k.a Shoaib0597. 
+	    This HotPlug is not a Load-Based HotPlug. Hence, this HotPlug is very 
+	    Efficient in terms of CPU and Battery Consumption. Moreover, as the 
+	    name indicates, this HotPlug provides absolute flexibility in terms 
+	    of usage.
