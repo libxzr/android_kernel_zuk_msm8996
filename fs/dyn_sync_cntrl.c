@@ -23,8 +23,8 @@ static DEFINE_MUTEX(fsync_mutex);
 
 // Declarations
 
-bool suspend_active __read_mostly = false;
-bool dyn_fsync_active __read_mostly = DYN_FSYNC_ACTIVE_DEFAULT;
+bool suspend_active = false;
+bool dyn_fsync_active = DYN_FSYNC_ACTIVE_DEFAULT;
 
 static struct notifier_block lcd_notif;
 
@@ -32,6 +32,13 @@ extern void sync_filesystems(int wait);
 
 
 // Functions
+
+static void dyn_fsync_force_flush(void)
+{
+	sync_filesystems(0);
+	sync_filesystems(1);
+}
+
 
 static ssize_t dyn_fsync_active_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -56,6 +63,9 @@ static ssize_t dyn_fsync_active_store(struct kobject *kobj,
 		{
 			pr_info("%s: dynamic fsync disabled\n", __FUNCTION__);
 			dyn_fsync_active = false;
+
+			// force a flush
+			dyn_fsync_force_flush();
 		}
 		else
 			pr_info("%s: bad value: %u\n", __FUNCTION__, data);
@@ -83,16 +93,10 @@ static ssize_t dyn_fsync_suspend_show(struct kobject *kobj,
 }
 
 
-static void dyn_fsync_force_flush(void)
-{
-	sync_filesystems(0);
-	sync_filesystems(1);
-}
-
-
 static int dyn_fsync_panic_event(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
+	// kernel panic, force flush now
 	suspend_active = false;
 	dyn_fsync_force_flush();
 	pr_warn("dynamic fsync: panic - force flush!\n");
@@ -104,9 +108,11 @@ static int dyn_fsync_panic_event(struct notifier_block *this,
 static int dyn_fsync_notify_sys(struct notifier_block *this, unsigned long code,
 				void *unused)
 {
-	if (code == SYS_DOWN || code == SYS_HALT) 
+	if (code == SYS_DOWN || code == SYS_HALT || code == SYS_POWER_OFF)
 	{
+		// system shutdown or reboot, disable dynamic fsync and force flush
 		suspend_active = false;
+		dyn_fsync_active = false;
 		dyn_fsync_force_flush();
 		pr_warn("dynamic fsync: reboot - force flush!\n");
 	}
