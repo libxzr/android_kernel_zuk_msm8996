@@ -2288,21 +2288,16 @@ static int set_soc_remap_point(struct fg_chip *chip, int soc)
 static int soc_remap_process(struct fg_chip *chip, int soc)
 {
 	int maped_soc = 0;
-	switch(soc){
+	switch (soc) {
 	case LENUK_OP_FIR_SOC :
-		maped_soc = set_soc_remap_point(chip,soc);
+		maped_soc = set_soc_remap_point(chip, soc);
 		break;
 	case LENUK_OP_SEC_SOC :
-		maped_soc = set_soc_remap_point(chip,soc) + 1;
-                break;
+		maped_soc = set_soc_remap_point(chip, soc) + 1;
+		break;
 	default:
-		chip->is_op_soc = 0;
-		if(soc >= 61 && soc <= 84 )
-			maped_soc = soc + 1;
-		else if(soc >= 86 && soc <= 100)
-			maped_soc = bound_soc(soc + 2);
-		else
-			maped_soc = soc;
+		maped_soc = bound_soc(soc + 2);
+		break;
 	}
 	pr_info("pre_map_soc is %d,post_map_soc is %d\n",soc,maped_soc);
 	return maped_soc;
