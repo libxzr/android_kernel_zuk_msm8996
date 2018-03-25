@@ -40,11 +40,9 @@ unsigned long boosted_cpu_util(int cpu);
 struct acgov_tunables {
 	struct gov_attr_set attr_set;
 	spinlock_t rate_limit_us_lock;
-	unsigned int *up_rate_limit_us;
-	unsigned int *down_rate_limit_us;
+	unsigned int (*rate_limit_us)[2];
 	spinlock_t capacity_lock;
-	unsigned int *up_capacity;
-	unsigned int *down_capacity;
+	unsigned int (*capacity)[2];
 	int nelements;
 	bool iowait_boost_enable;
 };
@@ -97,242 +95,126 @@ static DEFINE_PER_CPU(struct acgov_cpu, acgov_cpu);
 
 #define LITTLE_NFREQS		22
 #define BIG_NFREQS			31
+#define DOWN_INDEX			0
+#define UP_INDEX			1
 
 /* Target capacity.  */
-static unsigned int little_up_capacity[LITTLE_NFREQS] = {
-	102,
-	123,
-	149,
-	175,
-	201,
-	227,
-	253,
-	278,
-	298,
-	324,
-	350,
-	369,
-	395,
-	421,
-	447,
-	472,
-	498,
-	524,
-	563,
-	589,
-	615,
-	641
+static unsigned int little_capacity[LITTLE_NFREQS][2] = {
+	{0, 102},
+	{102, 123},
+	{123, 149},
+	{149, 175},
+	{175, 201},
+	{201, 227},
+	{227, 253},
+	{253, 278},
+	{278, 298},
+	{298, 324},
+	{324, 350},
+	{350, 369},
+	{369, 395},
+	{395, 421},
+	{421, 447},
+	{447, 472},
+	{472, 498},
+	{498, 524},
+	{524, 563},
+	{563, 589},
+	{589, 615},
+	{615, 641}
 };
 
-static unsigned int little_down_capacity[LITTLE_NFREQS] = {
-	0,
-	102,
-	123,
-	149,
-	175,
-	201,
-	227,
-	253,
-	278,
-	298,
-	324,
-	350,
-	369,
-	395,
-	421,
-	447,
-	472,
-	498,
-	524,
-	563,
-	589,
-	615
+static unsigned int big_capacity[BIG_NFREQS][2] = {
+	{0, 101},
+	{101, 116},
+	{116, 141},
+	{141, 167},
+	{167, 193},
+	{193, 218},
+	{218, 244},
+	{244, 269},
+	{269, 301},
+	{301, 327},
+	{327, 353},
+	{353, 378},
+	{378, 397},
+	{397, 423},
+	{423, 449},
+	{449, 474},
+	{474, 500},
+	{500, 525},
+	{525, 551},
+	{551, 577},
+	{577, 602},
+	{602, 628},
+	{628, 653},
+	{653, 679},
+	{679, 705},
+	{705, 737},
+	{737, 756},
+	{756, 775},
+	{775, 781},
+	{781, 788},
+	{788, 820}
 };
 
-static unsigned int big_up_capacity[BIG_NFREQS] = {
-	101,
-	116,
-	141,
-	167,
-	193,
-	218,
-	244,
-	269,
-	301,
-	327,
-	353,
-	378,
-	397,
-	423,
-	449,
-	474,
-	500,
-	525,
-	551,
-	577,
-	602,
-	628,
-	653,
-	679,
-	705,
-	737,
-	756,
-	775,
-	781,
-	788,
-	820
+static unsigned int little_rate_limit_us[LITTLE_NFREQS][2] = {
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 40000},
+	{20000, 40000},
+	{20000, 40000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 500}
 };
 
-static unsigned int big_down_capacity[BIG_NFREQS] = {
-	0,
-	101,
-	116,
-	141,
-	167,
-	193,
-	218,
-	244,
-	269,
-	301,
-	327,
-	353,
-	378,
-	397,
-	423,
-	449,
-	474,
-	500,
-	525,
-	551,
-	577,
-	602,
-	628,
-	653,
-	679,
-	705,
-	737,
-	756,
-	775,
-	781,
-	788
-};
-
-static unsigned int little_up_rate_limit_us[LITTLE_NFREQS] = {
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	40000,
-	40000,
-	40000,
-	20000,
-	20000,
-	20000,
-	500
-};
-
-static unsigned int little_down_rate_limit_us[LITTLE_NFREQS] = {
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000
-};
-
-static unsigned int big_up_rate_limit_us[BIG_NFREQS] = {
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	40000,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	500,
-	40000,
-	40000,
-	40000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	500000,
-	500
-};
-
-static unsigned int big_down_rate_limit_us[BIG_NFREQS] = {
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	20000,
-	500
+static unsigned int big_rate_limit_us[BIG_NFREQS][2] = {
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 40000},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 500},
+	{20000, 40000},
+	{20000, 40000},
+	{20000, 40000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 20000},
+	{20000, 500000},
+	{500, 500}
 };
 
 /************************ Governor internals ***********************/
@@ -357,8 +239,8 @@ static bool acgov_should_update_freq(struct acgov_policy *sg_policy, u64 time)
 	sg_policy->cur_index = index;
 #endif
 	spin_lock_irqsave(&sg_policy->tunables->rate_limit_us_lock, flags);
-	min_rate_limit_ns = min(sg_policy->tunables->up_rate_limit_us[index] * NSEC_PER_USEC,
-			sg_policy->tunables->down_rate_limit_us[index] * NSEC_PER_USEC);
+	min_rate_limit_ns = min(sg_policy->tunables->rate_limit_us[index][UP_INDEX] * NSEC_PER_USEC,
+			sg_policy->tunables->rate_limit_us[index][DOWN_INDEX] * NSEC_PER_USEC);
 	spin_unlock_irqrestore(&sg_policy->tunables->rate_limit_us_lock, flags);
 
 	if (unlikely(sg_policy->need_freq_update)) {
@@ -439,32 +321,32 @@ static unsigned int get_next_freq(struct acgov_policy *sg_policy,
 	delta_ns = time - sg_policy->last_freq_update_time;
 	spin_lock_irqsave(&tunables->capacity_lock, flags);
 	spin_lock_irqsave(&tunables->rate_limit_us_lock, rlflags);
-	if (util >= tunables->up_capacity[index]
+	if (util >= tunables->capacity[index][UP_INDEX]
 		 && policy->cur < policy->max
 		 && delta_ns >=
-			 tunables->up_rate_limit_us[index] * NSEC_PER_USEC) {
+			 tunables->rate_limit_us[index][UP_INDEX] * NSEC_PER_USEC) {
 		for (i = index + 1; i < tunables->nelements; i++) {
 			if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
 				continue;
 
 			next_freq = table[i].frequency;
-			if ((util <= tunables->up_capacity[i])
+			if ((util <= tunables->capacity[i][UP_INDEX])
 				 || (delta_ns <
-					 tunables->up_rate_limit_us[i] * NSEC_PER_USEC))
+					 tunables->rate_limit_us[i][UP_INDEX] * NSEC_PER_USEC))
 				break;
 		}
-	} else if (util < tunables->down_capacity[index]
+	} else if (util < tunables->capacity[index][DOWN_INDEX]
 		 && policy->cur > policy->min
 		 && delta_ns >=
-			 tunables->down_rate_limit_us[index] * NSEC_PER_USEC) {
+			 tunables->rate_limit_us[index][DOWN_INDEX] * NSEC_PER_USEC) {
 		for (i = index - 1; i >= 0; i--) {
 			if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
 				continue;
 
 			next_freq = table[i].frequency;
-			if ((util >= tunables->down_capacity[i])
+			if ((util >= tunables->capacity[i][DOWN_INDEX])
 				 || (delta_ns <
-					 tunables->down_rate_limit_us[i] * NSEC_PER_USEC))
+					 tunables->rate_limit_us[i][DOWN_INDEX] * NSEC_PER_USEC))
 				break;
 		}
 	}
@@ -740,12 +622,12 @@ static ssize_t up_rate_limit_us_show(struct gov_attr_set *attr_set, char *buf)
 	ssize_t ret = 0;
 	unsigned long flags;
 
-	if (!tunables->up_rate_limit_us)
+	if (!tunables->rate_limit_us)
 		return -EINVAL;
 
 	spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);
 	for (i = 0; i < tunables->nelements; i++)
-		ret += sprintf(buf + ret, "%u%s", tunables->up_rate_limit_us[i],
+		ret += sprintf(buf + ret, "%u%s", tunables->rate_limit_us[i][UP_INDEX],
 			       ":");
 	spin_unlock_irqrestore(&tunables->rate_limit_us_lock, flags);
 
@@ -763,7 +645,7 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	int ntokens = 1;
 	unsigned long flags;
 
-	if (!tunables->up_rate_limit_us)
+	if (!tunables->rate_limit_us)
 		return -EINVAL;
 
 	cp = buf;
@@ -776,10 +658,10 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	cp = buf;
 	spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);
 	for (i = 0; i < ntokens; i++) {
-		if (sscanf(cp, "%u", &tunables->up_rate_limit_us[i]) != 1) {
+		if (sscanf(cp, "%u", &tunables->rate_limit_us[i][UP_INDEX]) != 1) {
 			spin_unlock_irqrestore(&tunables->rate_limit_us_lock, flags);
 		} else {
-			pr_debug("index[%d], val[%u]\n", i, tunables->up_rate_limit_us[i]);
+			pr_debug("index[%d], val[%u]\n", i, tunables->rate_limit_us[i][UP_INDEX]);
 		}
 
 		cp = strpbrk(cp, ":");
@@ -800,12 +682,12 @@ static ssize_t down_rate_limit_us_show(struct gov_attr_set *attr_set, char *buf)
 	ssize_t ret = 0;
 	unsigned long flags;
 
-	if (!tunables->down_rate_limit_us)
+	if (!tunables->rate_limit_us)
 		return -EINVAL;
 
 	spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);
 	for (i = 0; i < tunables->nelements; i++)
-		ret += sprintf(buf + ret, "%u%s", tunables->down_rate_limit_us[i],
+		ret += sprintf(buf + ret, "%u%s", tunables->rate_limit_us[i][DOWN_INDEX],
 			       ":");
 	spin_unlock_irqrestore(&tunables->rate_limit_us_lock, flags);
 
@@ -823,7 +705,7 @@ static ssize_t down_rate_limit_us_store(struct gov_attr_set *attr_set,
 	int ntokens = 1;
 	unsigned long flags;
 
-	if (!tunables->down_rate_limit_us)
+	if (!tunables->rate_limit_us)
 		return -EINVAL;
 
 	cp = buf;
@@ -836,10 +718,10 @@ static ssize_t down_rate_limit_us_store(struct gov_attr_set *attr_set,
 	cp = buf;
 	spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);
 	for (i = 0; i < ntokens; i++) {
-		if (sscanf(cp, "%u", &tunables->down_rate_limit_us[i]) != 1) {
+		if (sscanf(cp, "%u", &tunables->rate_limit_us[i][DOWN_INDEX]) != 1) {
 			spin_unlock_irqrestore(&tunables->rate_limit_us_lock, flags);
 		} else {
-			pr_debug("index[%d], val[%u]\n", i, tunables->down_rate_limit_us[i]);
+			pr_debug("index[%d], val[%u]\n", i, tunables->rate_limit_us[i][DOWN_INDEX]);
 		}
 
 		cp = strpbrk(cp, ":");
@@ -860,12 +742,12 @@ static ssize_t up_capacity_show(struct gov_attr_set *attr_set, char *buf)
 	ssize_t ret = 0;
 	unsigned long flags;
 
-	if (!tunables->up_capacity)
+	if (!tunables->capacity)
 		return -EINVAL;
 
 	spin_lock_irqsave(&tunables->capacity_lock, flags);
 	for (i = 0; i < tunables->nelements; i++)
-		ret += sprintf(buf + ret, "%u%s", tunables->up_capacity[i],
+		ret += sprintf(buf + ret, "%u%s", tunables->capacity[i][UP_INDEX],
 			       ":");
 	spin_unlock_irqrestore(&tunables->capacity_lock, flags);
 
@@ -884,7 +766,7 @@ static ssize_t up_capacity_store(struct gov_attr_set *attr_set,
 	unsigned int value = 0;
 	unsigned long flags;
 
-	if (!tunables->up_capacity)
+	if (!tunables->capacity)
 		return -EINVAL;
 
 	cp = buf;
@@ -901,11 +783,11 @@ static ssize_t up_capacity_store(struct gov_attr_set *attr_set,
 			spin_unlock_irqrestore(&tunables->capacity_lock, flags);
 			return -EINVAL;
 		} else {
-			pr_debug("index[%d], val[%u]\n", i, tunables->up_capacity[i]);
+			pr_debug("index[%d], val[%u]\n", i, tunables->capacity[i][UP_INDEX]);
 		}
 		if (!value)
 			value = 1;
-		tunables->up_capacity[i] = value;
+		tunables->capacity[i][UP_INDEX] = value;
 		cp = strpbrk(cp, ":");
 		if (!cp)
 			break;
@@ -924,12 +806,12 @@ static ssize_t down_capacity_show(struct gov_attr_set *attr_set, char *buf)
 	ssize_t ret = 0;
 	unsigned long flags;
 
-	if (!tunables->down_capacity)
+	if (!tunables->capacity)
 		return -EINVAL;
 
 	spin_lock_irqsave(&tunables->capacity_lock, flags);
 	for (i = 0; i < tunables->nelements; i++)
-		ret += sprintf(buf + ret, "%u%s", tunables->down_capacity[i],
+		ret += sprintf(buf + ret, "%u%s", tunables->capacity[i][DOWN_INDEX],
 			       ":");
 	spin_unlock_irqrestore(&tunables->capacity_lock, flags);
 
@@ -948,7 +830,7 @@ static ssize_t down_capacity_store(struct gov_attr_set *attr_set,
 	unsigned int value = 0;
 	unsigned long flags;
 
-	if (!tunables->down_capacity)
+	if (!tunables->capacity)
 		return -EINVAL;
 
 	cp = buf;
@@ -968,8 +850,8 @@ static ssize_t down_capacity_store(struct gov_attr_set *attr_set,
 			if (!value
 				&& i > 0)
 				value = 1;
-			tunables->down_capacity[i] = value;
-			pr_debug("index[%d], val[%u]\n", i, tunables->down_capacity[i]);
+			tunables->capacity[i][DOWN_INDEX] = value;
+			pr_debug("index[%d], val[%u]\n", i, tunables->capacity[i][DOWN_INDEX]);
 		}
 
 		cp = strpbrk(cp, ":");
@@ -1113,16 +995,12 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 		spin_lock_init(&tunables->rate_limit_us_lock);
 		spin_lock_init(&tunables->capacity_lock);
 		if (policy->cpu < 4) {
-			tunables->up_rate_limit_us = little_up_rate_limit_us;
-			tunables->down_rate_limit_us = little_down_rate_limit_us;
-			tunables->up_capacity = little_up_capacity;
-			tunables->down_capacity = little_down_capacity;
+			tunables->rate_limit_us = little_rate_limit_us;
+			tunables->capacity = little_capacity;
 			tunables->nelements = LITTLE_NFREQS;
 		} else {
-			tunables->up_rate_limit_us = big_up_rate_limit_us;
-			tunables->down_rate_limit_us = big_down_rate_limit_us;
-			tunables->up_capacity = big_up_capacity;
-			tunables->down_capacity = big_down_capacity;
+			tunables->rate_limit_us = big_rate_limit_us;
+			tunables->capacity = big_capacity;
 			tunables->nelements = BIG_NFREQS;
 		}
 		/* Auto-populate up_capacity/down_capacity */
@@ -1134,11 +1012,11 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 			freq = arch_scale_freq_invariant() ?
 				policy->cpuinfo.max_freq : table[i].frequency;
 			freq = freq + (freq >> 2);
-			tunables->up_capacity[i] = ((max_cap * table[i].frequency) / freq) + 1;
+			tunables->capacity[i][UP_INDEX] = ((max_cap * table[i].frequency) / freq) + 1;
 			if (i == 0) {
-				tunables->down_capacity[i] = 0;
+				tunables->capacity[i][DOWN_INDEX] = 0;
 			} else {
-				tunables->down_capacity[i] = tunables->up_capacity[i - 1];
+				tunables->capacity[i][DOWN_INDEX] = tunables->capacity[i - 1][UP_INDEX];
 			}	
 		}
 		spin_unlock_irqrestore(&tunables->capacity_lock, flags);
@@ -1146,19 +1024,19 @@ static struct acgov_tunables *acgov_tunables_alloc(struct acgov_policy *sg_polic
 		spin_lock_irqsave(&tunables->rate_limit_us_lock, flags);		
 		if (policy->up_transition_delay_us && policy->down_transition_delay_us) {
 			for (i = 0; i < tunables->nelements; i++) {
-				tunables->up_rate_limit_us[i] = policy->up_transition_delay_us;
-				tunables->down_rate_limit_us[i] = policy->down_transition_delay_us;
+				tunables->rate_limit_us[i][UP_INDEX] = policy->up_transition_delay_us;
+				tunables->rate_limit_us[i][DOWN_INDEX] = policy->down_transition_delay_us;
 			}
 		} else {
 			unsigned int lat;
 
 			lat = policy->cpuinfo.transition_latency / NSEC_PER_USEC;
 			for (i = 0; i < tunables->nelements; i++) {
-				tunables->up_rate_limit_us[i] = LATENCY_MULTIPLIER;
-				tunables->down_rate_limit_us[i] = LATENCY_MULTIPLIER;
+				tunables->rate_limit_us[i][UP_INDEX] = LATENCY_MULTIPLIER;
+				tunables->rate_limit_us[i][DOWN_INDEX] = LATENCY_MULTIPLIER;
 				if (lat) {
-					tunables->up_rate_limit_us[i] *= lat;
-					tunables->down_rate_limit_us[i] *= lat;
+					tunables->rate_limit_us[i][UP_INDEX] *= lat;
+					tunables->rate_limit_us[i][DOWN_INDEX] *= lat;
 				}
 			}
 		}
@@ -1176,10 +1054,8 @@ static void acgov_tunables_free(struct acgov_tunables *tunables)
 	if (!have_governor_per_policy())
 		global_tunables = NULL;
 
-	tunables->up_rate_limit_us = NULL;
-	tunables->down_rate_limit_us = NULL;
-	tunables->up_capacity = NULL;
-	tunables->down_capacity = NULL;
+	tunables->rate_limit_us = NULL;
+	tunables->capacity = NULL;
 
 	kfree(tunables);
 }
