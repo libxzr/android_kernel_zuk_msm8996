@@ -3,6 +3,9 @@ PATCHLEVEL = 18
 SUBLEVEL = 71
 EXTRAVERSION =
 NAME = Diseased Newt
+ARCH=arm64
+SUBARCH=arm64
+CROSS_COMPILE=aarch64-linux-android-
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
