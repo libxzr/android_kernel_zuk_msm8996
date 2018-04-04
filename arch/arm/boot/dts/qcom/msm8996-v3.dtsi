@@ -47,8 +47,8 @@
 		<  315000000  4  4 >,
 		<  401800000  5  5 >,
 		<  510000000  6  5 >,
-		<  560000000  7  7 >,
-		<  624000000  8  7 >;
+		<  624000000  7  7 >,
+		<  710400000  8  7 >;
 	qcom,gfxfreq-mx-speedbin0 =
 		<	   0  0 >,
 		<  133000000  4 >,
@@ -56,8 +56,8 @@
 		<  315000000  4 >,
 		<  401800000  5 >,
 		<  510000000  5 >,
-		<  560000000  7 >,
-		<  624000000  7 >;
+		<  624000000  7 >,
+		<  710400000  7 >;
 
 	qcom,gfxfreq-speedbin1 =
 		<	   0  0  0 >,
@@ -157,7 +157,7 @@
 
 			qcom,gpu-pwrlevel@0 {
 				reg = <0>;
-				qcom,gpu-freq = <624000000>;
+				qcom,gpu-freq = <710400000>;
 				qcom,bus-freq = <12>;
 				qcom,bus-min = <11>;
 				qcom,bus-max = <12>;
@@ -165,7 +165,7 @@
 
 			qcom,gpu-pwrlevel@1 {
 				reg = <1>;
-				qcom,gpu-freq = <560000000>;
+				qcom,gpu-freq = <624000000>;
 				qcom,bus-freq = <11>;
 				qcom,bus-min = <9>;
 				qcom,bus-max = <12>;
