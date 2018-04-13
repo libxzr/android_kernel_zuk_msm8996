@@ -86,7 +86,7 @@ int gt1x_init_tool_node(void)
 		GTP_ERROR("Apply for memory failed.");
 		return -1;
 	}
-	GTP_INFO("Alloc memory size:%d.", DATA_LENGTH_UINT);
+	GTP_DEBUG("Alloc memory size:%d.", DATA_LENGTH_UINT);
 	DATA_LENGTH = DATA_LENGTH_UINT - GTP_ADDR_LENGTH;
 
 	set_tool_node_name(procname);
@@ -96,7 +96,7 @@ int gt1x_init_tool_node(void)
 		GTP_ERROR("CAN't create proc entry /proc/%s.", procname);
 		return -1;
 	} else {
-		GTP_INFO("Created proc entry /proc/%s.", procname);
+		GTP_DEBUG("Created proc entry /proc/%s.", procname);
 	}
 	return 0;
 }
