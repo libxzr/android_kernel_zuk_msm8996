@@ -601,8 +601,8 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 		struct pinctrl_state *pinctrl_active;
 
 	//do NOT remove these logs
-	GTP_INFO("GTP Driver Version: %s", GTP_DRIVER_VERSION);
-	GTP_INFO("GTP I2C Address: 0x%02x", client->addr);
+	GTP_DEBUG("GTP Driver Version: %s", GTP_DRIVER_VERSION);
+	GTP_DEBUG("GTP I2C Address: 0x%02x", client->addr);
 
 	gt1x_i2c_client = client;
 	spin_lock_init(&irq_lock);
@@ -640,9 +640,9 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 
 	ret = gt1x_request_irq();
 	if (ret < 0) {
-		GTP_INFO("GTP works in polling mode.");
+		GTP_DEBUG("GTP works in polling mode.");
 	} else {
-		GTP_INFO("GTP works in interrupt mode.");
+		GTP_DEBUG("GTP works in interrupt mode.");
 	}
 
 #ifdef TOUCH_SYS
@@ -711,7 +711,7 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 static int gt1x_ts_remove(struct i2c_client *client)
 {
 	GTP_DEBUG_FUNC();
-	GTP_INFO("GTP driver removing...");
+	GTP_DEBUG("GTP driver removing...");
 	gt1x_unregister_powermanger();
 
 #if GTP_GESTURE_WAKEUP
@@ -870,7 +870,7 @@ static struct i2c_driver gt1x_ts_driver = {
 static int __init gt1x_ts_init(void)
 {
 	GTP_DEBUG_FUNC();
-	GTP_INFO("GTP driver installing...");
+	GTP_DEBUG("GTP driver installing...");
 	gt1x_wq = create_singlethread_workqueue("gt1x_wq");
 	if (!gt1x_wq) {
 		GTP_ERROR("Creat workqueue failed.");
@@ -887,7 +887,7 @@ static int __init gt1x_ts_init(void)
 static void __exit gt1x_ts_exit(void)
 {
 	GTP_DEBUG_FUNC();
-	GTP_INFO("GTP driver exited.");
+	GTP_DEBUG("GTP driver exited.");
 	i2c_del_driver(&gt1x_ts_driver);
 	if (gt1x_wq) {
 		destroy_workqueue(gt1x_wq);

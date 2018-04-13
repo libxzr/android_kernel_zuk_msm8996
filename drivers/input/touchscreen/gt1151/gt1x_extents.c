@@ -238,7 +238,7 @@ s32 gesture_event_handler(struct input_dev * dev)
 	
 	/* check gesture type (if available?) */
 	if (ges_type == 0 || !QUERYBIT(gestures_flag, ges_type)) {
-		GTP_INFO("Gesture[0x%02X] has been disabled.", doze_buf[0]);
+		GTP_DEBUG("Gesture[0x%02X] has been disabled.", doze_buf[0]);
 		doze_buf[0] = 0x00;
 		gt1x_i2c_write(GTP_REG_WAKEUP_GESTURE, doze_buf, 1);
 		gesture_enter_doze();
@@ -397,20 +397,20 @@ static s32 hotknot_load_authentication_subsystem(void)
 	}
 
 	if (gt1x_chip_type == CHIP_TYPE_GT1X) {
-		GTP_INFO("hotknot load jump code.");
+		GTP_DEBUG("hotknot load jump code.");
 		ret = gt1x_load_patch(gt1x_patch_jump_fw, 4096, 0, 1024 * 8);
 		if (ret < 0) {
 			GTP_ERROR("Load jump code fail!");
 			return ret;
 		}
-		GTP_INFO("hotknot load auth code.");
+		GTP_DEBUG("hotknot load auth code.");
 		ret = gt1x_load_patch(hotknot_auth_fw, 4096, 4096, 1024 * 8);
 		if (ret < 0) {
 			GTP_ERROR("Load auth system fail!");
 			return ret;
 		}
 	} else { /* GT2X */
-		GTP_INFO("hotknot load auth code.");
+		GTP_DEBUG("hotknot load auth code.");
 		ret = gt1x_load_patch(hotknot_auth_fw, 4096, 0, 1024 * 6);
 		if (ret < 0) {
 			GTP_ERROR("load auth system fail!");
@@ -429,7 +429,7 @@ static s32 hotknot_load_authentication_subsystem(void)
 		return ERROR_IIC;
 	}
 	buffer[4] = 0;
-	GTP_INFO("Current System version: %s", buffer);
+	GTP_DEBUG("Current System version: %s", buffer);
 	return 0;
 }
 
@@ -704,7 +704,7 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			if (!ret) {
 				ret = sizeof(IO_VERSION);
 			}
-			GTP_INFO("%s", IO_VERSION);
+			GTP_DEBUG("%s", IO_VERSION);
 		}
 		break;
 	case IO_IIC_READ:
@@ -738,7 +738,7 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		//print a string to syc log messages between application and kernel.
 	case IO_PRINT:
 		if (data)
-			GTP_INFO("%s", (char *)data);
+			GTP_DEBUG("%s", (char *)data);
 		break;
 
 #if GTP_GESTURE_WAKEUP
@@ -837,7 +837,7 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 #endif //GTP_HOTKNOT
 
 	default:
-		GTP_INFO("Unknown cmd.");
+		GTP_DEBUG("Unknown cmd.");
 		ret = -1;
 		break;
 	}
@@ -903,7 +903,7 @@ s32 gt1x_init_node(void)
 		GTP_ERROR("CAN't create proc entry /proc/%s.", GESTURE_NODE);
 		return -1;
 	} else {
-		GTP_INFO("Created proc entry /proc/%s.", GESTURE_NODE);
+		GTP_DEBUG("Created proc entry /proc/%s.", GESTURE_NODE);
 	}
 #endif
 
@@ -912,7 +912,7 @@ s32 gt1x_init_node(void)
 		GTP_ERROR("CAN't create misc device in /dev/hotknot.");
 		return -1;
 	} else {
-		GTP_INFO("Created misc device in /dev/hotknot.");
+		GTP_DEBUG("Created misc device in /dev/hotknot.");
 	}
 #endif
 	return 0;
