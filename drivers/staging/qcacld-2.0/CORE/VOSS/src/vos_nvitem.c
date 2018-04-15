@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2690,3 +2690,4 @@ VOS_STATUS vos_init_wiphy_from_nv_bin(void)
 
     return VOS_STATUS_SUCCESS;
 }
+
