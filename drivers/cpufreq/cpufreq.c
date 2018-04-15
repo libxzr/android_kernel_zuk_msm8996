@@ -471,7 +471,11 @@ void cpufreq_freq_transition_end(struct cpufreq_policy *policy,
 }
 EXPORT_SYMBOL_GPL(cpufreq_freq_transition_end);
 
-
+void cpufreq_notify_utilization(struct cpufreq_policy *policy,unsigned int util)
+{
+ if (policy)
+ policy->util = util;
+}
 /*********************************************************************
  *                          SYSFS INTERFACE                          *
  *********************************************************************/

@@ -117,6 +117,8 @@ struct cpufreq_policy {
 
 	/* For cpufreq driver's internal use */
 	void			*driver_data;
+
+	unsigned int util;
 };
 
 /* Only for ACPI */
@@ -649,7 +651,7 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 /*********************************************************************
  *                         CPUFREQ STATS                             *
  *********************************************************************/
-
+void cpufreq_notify_utilization(struct cpufreq_policy *policy, unsigned int load);
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 void cpufreq_task_stats_init(struct task_struct *p);
 void cpufreq_task_stats_exit(struct task_struct *p);
