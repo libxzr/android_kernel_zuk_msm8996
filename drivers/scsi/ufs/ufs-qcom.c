@@ -1414,16 +1414,18 @@ static void __ufs_qcom_pm_qos_req_end(struct ufs_qcom_host *host, int req_cpu)
 static void ufs_qcom_pm_qos_req_end(struct ufs_hba *hba, struct request *req,
 	bool should_lock)
 {
-	unsigned long flags;
+	unsigned long flags = 0;
 
 	if (!hba || !req)
 		return;
 
-	if (should_lock)
+	if (should_lock) {
 		spin_lock_irqsave(hba->host->host_lock, flags);
-	__ufs_qcom_pm_qos_req_end(ufshcd_get_variant(hba), req->cpu);
-	if (should_lock)
+		__ufs_qcom_pm_qos_req_end(ufshcd_get_variant(hba), req->cpu);
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
+	} else {
+		__ufs_qcom_pm_qos_req_end(ufshcd_get_variant(hba), req->cpu);
+	}
 }
 
 static void ufs_qcom_pm_qos_vote_work(struct work_struct *work)

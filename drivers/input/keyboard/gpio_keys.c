@@ -356,7 +356,7 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 
 	gpio_value = __gpio_get_value(button->gpio);
 	state = ( gpio_value ? 1 : 0) ^ button->active_low;
-	pr_info("key gpio value = %d active_low = %d  state=%d home_button_status=%d\n" , gpio_value, button->active_low, state, home_button_status);
+	pr_debug("key gpio value = %d active_low = %d  state=%d home_button_status=%d\n" , gpio_value, button->active_low, state, home_button_status);
 
 	if (state && (int)button->code == HOME_KEY_CODE) {
 		home_button_status = true;
@@ -378,7 +378,7 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 void reset_home_button(void)
 {
 	home_button_status = false;
-	pr_info("key home button reset ok, home_button_status=%d", home_button_status);
+	pr_debug("key home button reset ok, home_button_status=%d", home_button_status);
 }
 
 /*

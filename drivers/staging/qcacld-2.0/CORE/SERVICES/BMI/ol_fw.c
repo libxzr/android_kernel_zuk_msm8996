@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1326,14 +1326,15 @@ void ol_ramdump_handler(struct ol_softc *scn)
 			return;
 		}
 
+		if (scn->enableFwSelfRecovery || scn->enableRamdumpCollection)
+			vos_set_logp_in_progress(VOS_MODULE_ID_VOSS, TRUE);
+
 		reg = (A_UINT32 *) (data + 4);
 		print_hex_dump(KERN_DEBUG, " ", DUMP_PREFIX_OFFSET, 16, 4, reg,
 				min_t(A_UINT32, len - 4, FW_REG_DUMP_CNT * 4),
 				false);
 		scn->fw_ram_dumping = 0;
 
-		if (scn->enableFwSelfRecovery || scn->enableRamdumpCollection)
-			vos_set_logp_in_progress(VOS_MODULE_ID_VOSS, TRUE);
 	}
 	else if (pattern == FW_REG_PATTERN) {
 		reg = (A_UINT32 *) (data + 4);
@@ -1358,8 +1359,6 @@ void ol_ramdump_handler(struct ol_softc *scn)
 			remaining -= 16;
 			reg += 4;
 		}
-		if ((scn->enableFwSelfRecovery || scn->enableRamdumpCollection) && (scn->fw_ram_dumping == 0))
-                        vos_set_logp_in_progress(VOS_MODULE_ID_VOSS, FALSE);
 	}
 	else if ((!scn->enableFwSelfRecovery)&&
 			((pattern & FW_RAMDUMP_PATTERN_MASK) ==

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1043,6 +1043,7 @@ typedef struct
     uint32_t channelwidth;
 
     uint16_t reduced_beacon_interval;
+    uint16_t beacon_tx_rate;
 }tSwitchChannelParams, *tpSwitchChannelParams;
 
 typedef struct CSAOffloadParams {
@@ -1056,6 +1057,9 @@ typedef struct CSAOffloadParams {
    tANI_U8 new_sub20_channelwidth;  /* 5MHz or 10Mhz channel width */
    tANI_U32 ies_present_flag;   /* WMI_CSA_EVENT_IES_PRESENT_FLAG */
    tSirMacAddr bssId;
+#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
+   tANI_U32 csa_tbtt_count;
+#endif//#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
 }*tpCSAOffloadParams, tCSAOffloadParams;
 
 typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,
@@ -1513,5 +1517,12 @@ struct hal_apfind_request
     u_int8_t  request_data[];
 };
 #endif
+
+struct hal_mnt_filter_type_request
+{
+    u_int32_t vdev_id;
+    u_int16_t request_data_len;
+    u_int8_t  request_data[];
+};
 
 #endif /* _HALMSGAPI_H_ */

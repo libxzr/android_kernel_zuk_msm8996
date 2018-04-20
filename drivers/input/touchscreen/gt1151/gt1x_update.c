@@ -232,14 +232,14 @@ int gt1x_auto_update_proc(void *data)
 {
 
 #if GTP_HEADER_FW_UPDATE
-	GTP_INFO("Start auto update thread...");
+	GTP_DEBUG("Start auto update thread...");
 	gt1x_update_firmware(NULL);
 #else
 	int ret;
 	char *filename;
 	u8 config[GTP_CONFIG_MAX_LENGTH] = { 0 };
 
-	GTP_INFO("Start auto update thread...");
+	GTP_DEBUG("Start auto update thread...");
 	ret = gt1x_search_update_files();
 	if (ret & (FOUND_FW_PATH_1 | FOUND_FW_PATH_2)) {
 		if (ret & FOUND_FW_PATH_1) {
@@ -261,7 +261,7 @@ int gt1x_auto_update_proc(void *data)
 			if (gt1x_i2c_write(GTP_REG_CONFIG_DATA, config, GTP_CONFIG_MAX_LENGTH)) {
 				GTP_ERROR("Update config failed!");
 			} else {
-				GTP_INFO("Update config successfully!");
+				GTP_DEBUG("Update config successfully!");
 			}
 		}
 	}
@@ -279,7 +279,7 @@ static int gt1x_search_update_files(void)
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 
-	GTP_INFO("Search firmware file...");
+	GTP_DEBUG("Search firmware file...");
 	while (retry-- > 0) {
 		msleep(500);
 
@@ -320,7 +320,7 @@ static int gt1x_search_update_files(void)
 			break;
 		}
 
-		GTP_INFO("Not found firmware or config file, retry.");
+		GTP_DEBUG("Not found firmware or config file, retry.");
 	}
 	set_fs(old_fs);
 
@@ -401,9 +401,9 @@ int gt1x_update_firmware(void *filename)
 	msleep(800);
 
 	for (i = 1; i < update_info.firmware->subsystem_count; i++) {
-		GTP_INFO("subsystem: %d", update_info.firmware->subsystem[i].type);
-		GTP_INFO("Length: %d", update_info.firmware->subsystem[i].length);
-		GTP_INFO("Address: %d", update_info.firmware->subsystem[i].address);
+		GTP_DEBUG("subsystem: %d", update_info.firmware->subsystem[i].type);
+		GTP_DEBUG("Length: %d", update_info.firmware->subsystem[i].length);
+		GTP_DEBUG("Address: %d", update_info.firmware->subsystem[i].address);
 
 		ret = gt1x_burn_subsystem(&(update_info.firmware->subsystem[i]));
 		if (ret) {
@@ -431,11 +431,11 @@ int gt1x_update_firmware(void *filename)
 	}
 	update_info.progress++;
 
-	GTP_INFO("Reset guitar & check firmware in flash.");
+	GTP_DEBUG("Reset guitar & check firmware in flash.");
 	for (i = 1; i < update_info.firmware->subsystem_count; i++) {
-		GTP_INFO("subsystem: %d", update_info.firmware->subsystem[i].type);
-		GTP_INFO("Length: %d", update_info.firmware->subsystem[i].length);
-		GTP_INFO("Address: %d", update_info.firmware->subsystem[i].address);
+		GTP_DEBUG("subsystem: %d", update_info.firmware->subsystem[i].type);
+		GTP_DEBUG("Length: %d", update_info.firmware->subsystem[i].length);
+		GTP_DEBUG("Address: %d", update_info.firmware->subsystem[i].address);
 
 		ret = gt1x_check_subsystem_in_flash(&(update_info.firmware->subsystem[i]));
 		if (ret) {
@@ -464,7 +464,7 @@ gt1x_update_exit:
 		gt1x_parse_sc_cfg(gt1x_version.sensor_id);
 	#endif
 	}
-	GTP_INFO("Update firmware succeefully!");
+	GTP_DEBUG("Update firmware succeefully!");
 	return ret;
 }
 
@@ -483,7 +483,7 @@ int gt1x_update_prepare(char *filename)
 		return ERROR_FW;
 #endif
 	} else {
-		GTP_INFO("Firmware: %s", filename);
+		GTP_DEBUG("Firmware: %s", filename);
 		update_info.old_fs = get_fs();
 		set_fs(KERNEL_DS);
 		update_info.fw_name = filename;
@@ -502,10 +502,10 @@ int gt1x_update_prepare(char *filename)
 		retry--;
 		update_info.firmware = (struct fw_info *)kzalloc(sizeof(struct fw_info), GFP_KERNEL);
 		if (update_info.firmware == NULL) {
-			GTP_INFO("Alloc %zu bytes memory fail.", sizeof(struct fw_info));
+			GTP_DEBUG("Alloc %zu bytes memory fail.", sizeof(struct fw_info));
 			continue;
 		} else {
-			GTP_INFO("Alloc %zu bytes memory success.", sizeof(struct fw_info));
+			GTP_DEBUG("Alloc %zu bytes memory success.", sizeof(struct fw_info));
 			break;
 		}
 	}
@@ -521,7 +521,7 @@ int gt1x_update_prepare(char *filename)
 			GTP_ERROR("Alloc %d bytes memory fail.", 1024 * 4);
 			continue;
 		} else {
-			GTP_INFO("Alloc %d bytes memory success.", 1024 * 4);
+			GTP_DEBUG("Alloc %d bytes memory success.", 1024 * 4);
 			break;
 		}
 	}
@@ -617,12 +617,12 @@ int gt1x_check_firmware(void)
 	}
 
 	// print update information
-	GTP_INFO("Update type: %s", update_info.update_type == UPDATE_TYPE_HEADER ? "Header" : "File");
-	GTP_INFO("Firmware length: %d", update_info.fw_length);
-	GTP_INFO("Firmware product: GT%s", update_info.firmware->pid);
-	GTP_INFO("Firmware patch: %02X%02X%02X", update_info.firmware->version[0], update_info.firmware->version[1], update_info.firmware->version[2]);
-	GTP_INFO("Firmware chip: 0x%02X", update_info.firmware->chip_type);
-	GTP_INFO("Subsystem count: %d", update_info.firmware->subsystem_count);
+	GTP_DEBUG("Update type: %s", update_info.update_type == UPDATE_TYPE_HEADER ? "Header" : "File");
+	GTP_DEBUG("Firmware length: %d", update_info.fw_length);
+	GTP_DEBUG("Firmware product: GT%s", update_info.firmware->pid);
+	GTP_DEBUG("Firmware patch: %02X%02X%02X", update_info.firmware->version[0], update_info.firmware->version[1], update_info.firmware->version[2]);
+	GTP_DEBUG("Firmware chip: 0x%02X", update_info.firmware->chip_type);
+	GTP_DEBUG("Subsystem count: %d", update_info.firmware->subsystem_count);
 	for (i = 0; i < update_info.firmware->subsystem_count; i++) {
 		GTP_DEBUG("------------------------------------------");
 		GTP_DEBUG("Subsystem: %d", i);
@@ -694,31 +694,31 @@ _reset:
 	}while (--retry);
 
 	if (!retry) {
-		GTP_INFO("Update abort because of i2c error.");
+		GTP_DEBUG("Update abort because of i2c error.");
 		return ERROR_CHECK;
 	}
 	if (reg_val[0] != 0xBE || reg_val[1] == 0xAA) {
-		GTP_INFO("Check fw status reg not pass,reg[0x814E]=0x%2X,reg[0x5095]=0x%2X!",
+		GTP_DEBUG("Check fw status reg not pass,reg[0x814E]=0x%2X,reg[0x5095]=0x%2X!",
 			reg_val[0], reg_val[1]);
 		return 0;
 	}
 
 	ret = gt1x_read_version(&ver_info);
 	if (ret < 0) {
-		GTP_INFO("Get IC's version info failed, force update!");
+		GTP_DEBUG("Get IC's version info failed, force update!");
 		return 0;
 	}
 
 	if (memcmp(fw_ver_info.product_id, ver_info.product_id, 4)) {
-		GTP_INFO("Product id is not match!");
+		GTP_DEBUG("Product id is not match!");
 		return ERROR_CHECK;
 	}
 	if ((fw_ver_info.mask_id & 0xFFFFFF00) != (ver_info.mask_id & 0xFFFFFF00)) {
-		GTP_INFO("Mask id is not match!");
+		GTP_DEBUG("Mask id is not match!");
 		return ERROR_CHECK;
 	}
 	if ((fw_ver_info.patch_id & 0xFF0000) != (ver_info.patch_id & 0xFF0000)){
-		GTP_INFO("CID is not equal, need update!");
+		GTP_DEBUG("CID is not equal, need update!");
 		return 0;
 	}
 #if GTP_DEBUG_ON
@@ -728,7 +728,7 @@ _reset:
 	}
 #endif
 	if ((fw_ver_info.patch_id & 0xFFFF) <= (ver_info.patch_id & 0xFFFF)) {
-		GTP_INFO("The version of the fw is not high than the IC's!");
+		GTP_DEBUG("The version of the fw is not high than the IC's!");
 		return ERROR_CHECK;
 	}
 	return 0;
@@ -771,7 +771,7 @@ int __gt1x_hold_ss51_dsp_20(void)
 		return ERROR_RETRY;
 	}
 
-	GTP_INFO("Hold ss51&dsp successfully.");
+	GTP_DEBUG("Hold ss51&dsp successfully.");
 	return 0;
 }
 
@@ -857,7 +857,7 @@ int gt1x_run_ss51_isp(u8 * ss51_isp, int length)
 		return ret;
 	}
 
-	GTP_INFO("ss51_isp length: %d, checksum: 0x%04X", length, gt1x_calc_checksum(ss51_isp, length));
+	GTP_DEBUG("ss51_isp length: %d, checksum: 0x%04X", length, gt1x_calc_checksum(ss51_isp, length));
 	// load ss51 isp
 	ret = gt1x_i2c_write(0xC000, ss51_isp, length);
 	if (ret) {
@@ -970,16 +970,16 @@ int gt1x_burn_subsystem(struct fw_subsystem_info *subsystem)
 	int retry = 5;
 	u8 *fw;
 
-	GTP_INFO("Subsystem: %d", subsystem->type);
-	GTP_INFO("Length: %d", subsystem->length);
-	GTP_INFO("Address: 0x%08X", subsystem->address);
+	GTP_DEBUG("Subsystem: %d", subsystem->type);
+	GTP_DEBUG("Length: %d", subsystem->length);
+	GTP_DEBUG("Address: 0x%08X", subsystem->address);
 
 	while (length > 0 && retry > 0) {
 		retry--;
 
 		block_len = length > 1024 * 4 ? 1024 * 4 : length;
 
-		GTP_INFO("Burn block ==> length: %d, address: 0x%08X", block_len, subsystem->address + burn_len);
+		GTP_DEBUG("Burn block ==> length: %d, address: 0x%08X", block_len, subsystem->address + burn_len);
 		fw = gt1x_get_fw_data(subsystem->offset + burn_len, block_len);
 		if (fw == NULL) {
 			return ERROR_FW;
@@ -1059,7 +1059,7 @@ int gt1x_burn_subsystem(struct fw_subsystem_info *subsystem)
 				GTP_ERROR("checksum error!");
 				break;
 			} else if (buffer[0] == 0xBB) {
-				GTP_INFO("burning success.");
+				GTP_DEBUG("burning success.");
 				burn_state = 0;
 				break;
 			} else if (buffer[0] == 0xCC) {
@@ -1093,14 +1093,14 @@ int gt1x_check_subsystem_in_flash(struct fw_subsystem_info *subsystem)
 	int retry = 5;
 	u8 *fw;
 
-	GTP_INFO("Subsystem: %d", subsystem->type);
-	GTP_INFO("Length: %d", subsystem->length);
-	GTP_INFO("Address: 0x%08X", subsystem->address);
+	GTP_DEBUG("Subsystem: %d", subsystem->type);
+	GTP_DEBUG("Length: %d", subsystem->length);
+	GTP_DEBUG("Address: 0x%08X", subsystem->address);
 
 	while (length > 0) {
 		block_len = length > 1024 * 4 ? 1024 * 4 : length;
 
-		GTP_INFO("Check block ==> length: %d, address: 0x%08X", block_len, subsystem->address + checked_len);
+		GTP_DEBUG("Check block ==> length: %d, address: 0x%08X", block_len, subsystem->address + checked_len);
 		fw = gt1x_get_fw_data(subsystem->offset + checked_len, block_len);
 		if (fw == NULL) {
 			return ERROR_FW;
@@ -1123,7 +1123,7 @@ int gt1x_check_subsystem_in_flash(struct fw_subsystem_info *subsystem)
 	if (check_state) {
 		GTP_ERROR("Subsystem in flash is broken!");
 	} else {
-		GTP_INFO("Subsystem in flash is correct!");
+		GTP_DEBUG("Subsystem in flash is correct!");
 	}
 	return check_state;
 }
@@ -1135,7 +1135,7 @@ int gt1x_read_flash(u32 addr, int length)
 	u8 buffer[4];
 	u16 read_addr = (addr >> 8);
 
-	GTP_INFO("Read flash: 0x%04X, length: %d", addr, length);
+	GTP_DEBUG("Read flash: 0x%04X, length: %d", addr, length);
 
 	buffer[0] = 0;
 	ret = gt1x_i2c_write_with_readback(0x8022, buffer, 1);
@@ -1163,7 +1163,7 @@ int gt1x_read_flash(u32 addr, int length)
 			continue;
 		}
 		if (buffer[0] == 0xBB) {
-			GTP_INFO("Read success(addr: 0x%04X, length: %d)", addr, length);
+			GTP_DEBUG("Read success(addr: 0x%04X, length: %d)", addr, length);
 			break;
 		}
 	}
@@ -1187,7 +1187,7 @@ int gt1x_error_erase(void)
 	int retry = 5;
 	u8 *fw = NULL;
 
-	GTP_INFO("Erase flash area of ss51.");
+	GTP_DEBUG("Erase flash area of ss51.");
 
 	gt1x_reset_guitar();
 
@@ -1282,7 +1282,7 @@ int gt1x_error_erase(void)
 				GTP_ERROR("checksum error!");
 				break;
 			} else if (buffer[0] == 0xBB) {
-				GTP_INFO("burning success.");
+				GTP_DEBUG("burning success.");
 				burn_state = 0;
 				break;
 			} else if (buffer[0] == 0xCC) {
@@ -1327,7 +1327,7 @@ void dump_to_file(u16 addr, int length, char *filepath)
 	int read_length = 0;
 	int len = 0;
 
-	GTP_INFO("Dump(0x%04X, %d bytes) to file: %s\n", addr, length, filepath);
+	GTP_DEBUG("Dump(0x%04X, %d bytes) to file: %s\n", addr, length, filepath);
 	flp = filp_open(filepath, O_RDWR | O_CREAT, 0666);
 	if (IS_ERR(flp)) {
 		GTP_ERROR("can not open file: %s\n", filepath);
@@ -1407,7 +1407,7 @@ int gt1x_load_patch(u8 * patch, u32 patch_size, int offset, int bank_size)
 	u8 bank = 0, tmp;
 	u16 address;
 
-	GTP_INFO("Load patch code(size: %d, checksum: 0x%04X, position: 0x%04X, bank-size: %d", patch_size, gt1x_calc_checksum(patch, patch_size), 0xC000 + offset, bank_size);
+	GTP_DEBUG("Load patch code(size: %d, checksum: 0x%04X, position: 0x%04X, bank-size: %d", patch_size, gt1x_calc_checksum(patch, patch_size), 0xC000 + offset, bank_size);
 	while (loaded_length != patch_size) {
 		if (loaded_length == 0 || (loaded_length + offset) % bank_size == 0) {
 			// select bank
@@ -1417,7 +1417,7 @@ int gt1x_load_patch(u8 * patch, u32 patch_size, int offset, int bank_size)
 				GTP_ERROR("select bank%d fail!", bank);
 				return ret;
 			}
-			GTP_INFO("Select bank%d success.", bank);
+			GTP_DEBUG("Select bank%d success.", bank);
 			// enable patch area access
 			tmp = 0x01;
 			ret = gt1x_i2c_write_with_readback(_bRW_MISCTL__PATCH_AREA_EN_ + bank - 4, &tmp, 1);
@@ -1440,7 +1440,7 @@ int gt1x_load_patch(u8 * patch, u32 patch_size, int offset, int bank_size)
 			GTP_ERROR("Recall check 0x%04X, %dbytes fail!", address, len);
 			return ret;
 		}
-		GTP_INFO("load code 0x%04X, %dbytes success.", address, len);
+		GTP_DEBUG("load code 0x%04X, %dbytes success.", address, len);
 
 		loaded_length += len;
 	}

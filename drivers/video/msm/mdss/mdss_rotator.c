@@ -70,7 +70,7 @@ static struct msm_bus_scale_pdata rot_reg_bus_scale_table = {
 };
 
 static struct mdss_rot_mgr *rot_mgr;
-static void mdss_rotator_wq_handler(struct work_struct *work);
+static void mdss_rotator_work_handler(struct kthread_work *work);
 
 static int mdss_rotator_bus_scale_set_quota(struct mdss_rot_bus_data_type *bus,
 		u64 quota)
@@ -695,7 +695,7 @@ static struct mdss_rot_hw_resource *mdss_rotator_hw_alloc(
 	struct mdss_rot_hw_resource *hw;
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 	u32 pipe_ndx, offset = mdss_mdp_get_wb_ctl_support(mdata, true);
-	int ret;
+	int ret = 0;
 
 	hw = devm_kzalloc(&mgr->pdev->dev, sizeof(struct mdss_rot_hw_resource),
 		GFP_KERNEL);
@@ -756,8 +756,10 @@ static struct mdss_rot_hw_resource *mdss_rotator_hw_alloc(
 	if (ret)
 		goto error;
 
-	if (pipe_id >= mdata->ndma_pipes)
+	if (pipe_id >= mdata->ndma_pipes) {
+		ret = -EINVAL;
 		goto error;
+	}
 
 	pipe_ndx = mdata->dma_pipes[pipe_id].ndx;
 	hw->pipe = mdss_mdp_pipe_assign(mdata, hw->mixer,
@@ -846,6 +848,7 @@ static int mdss_rotator_init_queue(struct mdss_rot_mgr *mgr)
 {
 	int i, size, ret = 0;
 	char name[32];
+	struct sched_param param = { .sched_priority = 5 };
 
 	size = sizeof(struct mdss_rot_queue) * mgr->queue_count;
 	mgr->queues = devm_kzalloc(&mgr->pdev->dev, size, GFP_KERNEL);
@@ -853,14 +856,18 @@ static int mdss_rotator_init_queue(struct mdss_rot_mgr *mgr)
 		return -ENOMEM;
 
 	for (i = 0; i < mgr->queue_count; i++) {
-		snprintf(name, sizeof(name), "rot_workq_%d", i);
-		pr_debug("work queue name=%s\n", name);
-		mgr->queues[i].rot_work_queue = alloc_ordered_workqueue("%s",
-				WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_HIGHPRI, name);
-		if (!mgr->queues[i].rot_work_queue) {
-			ret = -EPERM;
+		snprintf(name, sizeof(name), "rot_thread_%d", i);
+		pr_info("work thread name=%s\n", name);
+		init_kthread_worker(&mgr->queues[i].worker);
+		mgr->queues[i].thread = kthread_run(kthread_worker_fn,
+						     &mgr->queues[i].worker,
+						     name);
+		if (IS_ERR(&mgr->queues[i].thread)) {
+			pr_err("Unable to start rotator thread: %d", i);
+			ret = -ENOMEM;
 			break;
 		}
+		sched_setscheduler(mgr->queues[i].thread, SCHED_FIFO, &param);
 
 		snprintf(name, sizeof(name), "rot_timeline_%d", i);
 		pr_debug("timeline name=%s\n", name);
@@ -890,8 +897,8 @@ static void mdss_rotator_deinit_queue(struct mdss_rot_mgr *mgr)
 		return;
 
 	for (i = 0; i < mgr->queue_count; i++) {
-		if (mgr->queues[i].rot_work_queue)
-			destroy_workqueue(mgr->queues[i].rot_work_queue);
+		if (mgr->queues[i].thread)
+			kthread_stop(mgr->queues[i].thread);
 
 		if (mgr->queues[i].timeline.timeline) {
 			struct sync_timeline *obj;
@@ -1028,7 +1035,7 @@ static void mdss_rotator_queue_request(struct mdss_rot_mgr *mgr,
 		entry = req->entries + i;
 		queue = entry->queue;
 		entry->output_fence = NULL;
-		queue_work(queue->rot_work_queue, &entry->commit_work);
+		queue_kthread_work(&queue->worker, &entry->commit_work);
 	}
 }
 
@@ -1537,7 +1544,8 @@ static int mdss_rotator_add_request(struct mdss_rot_mgr *mgr,
 
 		entry->request = req;
 
-		INIT_WORK(&entry->commit_work, mdss_rotator_wq_handler);
+		init_kthread_work(&entry->commit_work,
+				  mdss_rotator_work_handler);
 
 		ret = mdss_rotator_create_fence(entry);
 		if (ret) {
@@ -1589,7 +1597,7 @@ static void mdss_rotator_cancel_request(struct mdss_rot_mgr *mgr,
 	 */
 	for (i = req->count - 1; i >= 0; i--) {
 		entry = req->entries + i;
-		cancel_work_sync(&entry->commit_work);
+		flush_kthread_work(&entry->commit_work);
 	}
 
 	for (i = req->count - 1; i >= 0; i--) {
@@ -1859,7 +1867,7 @@ static int mdss_rotator_handle_entry(struct mdss_rot_hw_resource *hw,
 	return ret;
 }
 
-static void mdss_rotator_wq_handler(struct work_struct *work)
+static void mdss_rotator_work_handler(struct kthread_work *work)
 {
 	struct mdss_rot_entry *entry;
 	struct mdss_rot_entry_container *request;
@@ -2042,7 +2050,7 @@ static int mdss_rotator_close_session(struct mdss_rot_mgr *mgr,
 	ATRACE_BEGIN(__func__);
 	mutex_lock(&perf->work_dis_lock);
 	if (mdss_rotator_is_work_pending(mgr, perf)) {
-		pr_debug("Work is still pending, offload free to wq\n");
+		pr_debug("Work is still pending, offload free to worker\n");
 		mutex_lock(&mgr->bus_lock);
 		mgr->pending_close_bw_vote += perf->bw;
 		mutex_unlock(&mgr->bus_lock);

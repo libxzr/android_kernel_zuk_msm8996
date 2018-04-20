@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3186,6 +3186,10 @@ typedef struct sSmeCsaOffloadInd
     tANI_U16    mesgType;    // eWNI_SME_CSA_OFFLOAD_EVENT
     tANI_U16    mesgLen;
     tSirMacAddr bssId;       // BSSID
+#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
+    tANI_U16    channel;
+    tANI_U16    tbtt_count;
+#endif//#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
 } tSmeCsaOffloadInd, *tpSmeCsaOffloadInd;
 
 /// WOW related structures
@@ -5259,6 +5263,9 @@ typedef struct sSirDfsCsaIeRequest
     uint8_t  ch_switch_mode;
     uint8_t  dfs_ch_switch_disable;
     uint8_t  sub20_switch_mode;
+#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
+    tANI_U8  csaSwitchCount;
+#endif//#ifdef WLAN_FEATURE_SAP_TO_FOLLOW_STA_CHAN
 }tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
 /* Indication from lower layer indicating the completion of first beacon send
@@ -5302,7 +5309,24 @@ typedef struct{
     u_int8_t thermalMgmtEnabled;
     u_int32_t throttlePeriod;
     u_int8_t throttle_duty_cycle_tbl[WLAN_THROTTLE_DUTY_CYCLE_LEVEL_MAX];
+#ifdef FEATURE_WLAN_THERMAL_SHUTDOWN
+    uint8_t  thermal_shutdown_enabled;
+    uint8_t  thermal_shutdown_auto_enabled;
+    uint16_t thermal_resume_threshold;
+    uint16_t thermal_warning_threshold;
+    uint16_t thermal_suspend_threshold;
+    uint16_t thermal_sample_rate;
+#endif
+
 } t_thermal_mgmt, *tp_thermal_mgmt;
+
+typedef struct{
+    u_int32_t dpd_enable;
+    u_int32_t dpd_delta_degreeHigh;
+    u_int32_t dpd_delta_degreeLow;
+    u_int32_t dpd_cooling_time;
+    u_int32_t dpd_duration_max;
+} t_dpd_recal_mgmt, *tp_dpd_recal_mgmt;
 
 typedef struct sSirTxPowerLimit
 {
