@@ -1,0 +1,881 @@
+	struct spmi_device *spmi = chip->spmi;
+	struct spmi_device *spmi = chip->spmi;
+	rc = fg_read(chip, &mem_if_sts, INT_RT_STS(chip->mem_base), 1);
+	rc = fg_read(chip, &mem_if_sts, INT_RT_STS(chip->mem_base), 1);
+		fg_stay_awake(&chip->memif_wakeup_source);
+			&chip->sram_access_granted,
+	fg_relax(&chip->memif_wakeup_source);
+	reinit_completion(&chip->sram_access_granted);
+	mutex_lock(&chip->rw_lock);
+	if (atomic_sub_return(1, &chip->memif_user_cnt) <= 0) {
+	mutex_unlock(&chip->rw_lock);
+	mutex_lock(&chip->rw_lock);
+	atomic_add_return(1, &chip->memif_user_cnt);
+	mutex_unlock(&chip->rw_lock);
+		chip->mem_base + chip->offset[MEM_INTF_ADDR_LSB], 2);
+			chip->mem_base + chip->offset[MEM_INTF_ADDR_LSB], rc);
+	user_cnt = atomic_add_return(1, &chip->memif_user_cnt);
+	mutex_lock(&chip->rw_lock);
+	user_cnt = atomic_sub_return(1, &chip->memif_user_cnt);
+	mutex_unlock(&chip->rw_lock);
+	user_cnt = atomic_add_return(1, &chip->memif_user_cnt);
+	mutex_lock(&chip->rw_lock);
+	user_cnt = atomic_sub_return(1, &chip->memif_user_cnt);
+	mutex_unlock(&chip->rw_lock);
+			chip->mem_base + MEM_INTF_IMA_ERR_STS, 1);
+			chip->mem_base + MEM_INTF_IMA_EXP_STS, 1);
+			chip->mem_base + MEM_INTF_IMA_HW_STS, 1);
+		ret |= fg_masked_write(chip, chip->mem_base + MEM_INTF_IMA_CFG,
+		ret |= fg_masked_write(chip, chip->mem_base + MEM_INTF_IMA_CFG,
+			chip->mem_base + MEM_INTF_IMA_OPR_STS, 1);
+				chip->mem_base + MEM_INTF_IMA_BYTE_EN, 1);
+	fg_stay_awake(&chip->memif_wakeup_source);
+	mutex_lock(&chip->rw_lock);
+			chip->mem_base + MEM_INTF_FG_BEAT_COUNT, 1);
+			chip->mem_base + MEM_INTF_FG_BEAT_COUNT, 1);
+	mutex_unlock(&chip->rw_lock);
+	fg_relax(&chip->memif_wakeup_source);
+	fg_stay_awake(&chip->memif_wakeup_source);
+	mutex_lock(&chip->rw_lock);
+	mutex_unlock(&chip->rw_lock);
+	fg_relax(&chip->memif_wakeup_source);
+	if (chip->ima_supported)
+	if (chip->ima_supported)
+	mutex_lock(&chip->rw_lock);
+	atomic_add_return(1, &chip->memif_user_cnt);
+	mutex_unlock(&chip->rw_lock);
+				 INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+				chip->soc_base + SOC_MONOTONIC_SOC, 2);
+				chip->soc_base + SOC_MONOTONIC_SOC, rc);
+	if (chip->battery_missing)
+	if (!chip->profile_loaded && !chip->use_otp_profile)
+	if (chip->charge_full)
+	if (chip->soc_empty) {
+		&chip->update_jeita_setting);
+		&chip->update_jeita_setting, 0);
+				 INT_RT_STS(chip->batt_base), 1);
+				INT_RT_STS(chip->batt_base), rc);
+	fg_stay_awake(&chip->update_sram_wakeup_source);
+	if (chip->fg_restarting)
+		if (chip->profile_loaded && i >= FG_DATA_BATT_ID)
+					temp * (int64_t)chip->nom_cap_uah,
+			fg_data[i].value = div64_s64(temp * chip->nom_cap_uah,
+		get_current_time(&chip->last_sram_update_time);
+		if ((capacity != chip->monotonic_soc_old) && (chip->power_supply_registered)) {
+			printk("new_soc=%d  old_soc=%d\n", capacity, chip->monotonic_soc_old);
+			power_supply_changed(&chip->bms_psy);
+			chip->monotonic_soc_old = capacity;
+		complete_all(&chip->batt_id_avail);
+	fg_relax(&chip->update_sram_wakeup_source);
+			&chip->sram_access_revoked,
+		&chip->update_sram_data,
+	if (chip->fg_restarting)
+	fg_stay_awake(&chip->update_temp_wakeup_source);
+	if (chip->sw_rbias_ctrl) {
+				&chip->sram_access_revoked,
+		chip->sw_rbias_ctrl ? 1 : 0);
+		power_supply_changed(&chip->bms_psy);
+	get_current_time(&chip->last_temp_update_time);
+	if (chip->sw_rbias_ctrl) {
+	fg_relax(&chip->update_temp_wakeup_source);
+		&chip->update_temp_work,
+	rc = fg_read(chip, &fg_batt_sts, INT_RT_STS(chip->batt_base), 1);
+			chip->cyc_ctr.count[i] = data[0] | data[1] << 8;
+	if (!chip->cyc_ctr.en)
+	len = sizeof(chip->cyc_ctr.count);
+	memset(chip->cyc_ctr.count, 0, len);
+		chip->cyc_ctr.started[i] = false;
+		chip->cyc_ctr.last_soc[i] = 0;
+	rc = fg_mem_write(chip, (u8 *)&chip->cyc_ctr.count,
+	cyc_count = chip->cyc_ctr.count[bucket];
+		chip->cyc_ctr.count[bucket] = cyc_count;
+	mutex_lock(&chip->cyc_ctr.lock);
+	if (chip->status == POWER_SUPPLY_STATUS_CHARGING) {
+		if (bucket > 0 && chip->cyc_ctr.started[bucket - 1] &&
+			!chip->cyc_ctr.started[bucket]) {
+				chip->cyc_ctr.started[bucket - 1] = false;
+				chip->cyc_ctr.last_soc[bucket - 1] = 0;
+		if (!chip->cyc_ctr.started[bucket]) {
+			chip->cyc_ctr.started[bucket] = true;
+			chip->cyc_ctr.last_soc[bucket] = batt_soc;
+			if (chip->cyc_ctr.started[i] &&
+				batt_soc > chip->cyc_ctr.last_soc[i]) {
+				chip->cyc_ctr.last_soc[i] = 0;
+			chip->cyc_ctr.started[i] = false;
+	mutex_unlock(&chip->cyc_ctr.lock);
+	if (!chip->cyc_ctr.en)
+	if ((chip->cyc_ctr.id <= 0) || (chip->cyc_ctr.id > BUCKET_COUNT))
+	mutex_lock(&chip->cyc_ctr.lock);
+	count = chip->cyc_ctr.count[chip->cyc_ctr.id - 1];
+	mutex_unlock(&chip->cyc_ctr.lock);
+	if (soc > chip->ocv_junction_p1p2 * 10)
+		coeffs = chip->ocv_coeffs;
+	else if (soc > chip->ocv_junction_p2p3 * 10)
+		coeffs = chip->ocv_coeffs + 4;
+		coeffs = chip->ocv_coeffs + 8;
+	if (chip->batt_aging_mode != FG_AGING_ESR)
+	if (chip->nom_cap_uah == 0) {
+				battery_soc, chip->cutoff_voltage,
+				chip->evaluation_current);
+	ocv_cutoff_new = div64_s64(chip->evaluation_current * val, 1000)
+		+ chip->cutoff_voltage;
+	ocv_cutoff_aged = div64_s64(chip->evaluation_current * val, 1000)
+		+ chip->cutoff_voltage;
+	*actual_capacity = div64_s64(((int64_t)chip->nom_cap_uah)
+				chip->nom_cap_uah, *actual_capacity);
+	estimate_battery_age(chip, &chip->actual_cap_uah);
+		if (chip->battery_missing)
+		else if (chip->fg_restarting)
+			val->strval = chip->batt_type;
+		val->intval = chip->batt_max_voltage_uv;
+		val->intval = chip->cyc_ctr.id;
+		val->intval = chip->nom_cap_uah;
+		val->intval = chip->learning_data.learned_cc_uah;
+		val->intval = chip->learning_data.cc_uah;
+		val->intval = chip->bcl_lpm_disabled;
+	if (batt_temp > chip->learning_data.max_temp
+			|| batt_temp < chip->learning_data.min_temp) {
+					chip->learning_data.min_temp,
+					chip->learning_data.max_temp);
+	chip->learning_data.cc_uah = 0;
+	chip->learning_data.active = false;
+	mutex_lock(&chip->learning_data.learning_lock);
+	if (!chip->learning_data.active)
+	if (chip->wa_flag & USE_CC_SOC_REG) {
+		mutex_unlock(&chip->learning_data.learning_lock);
+		fg_relax(&chip->capacity_learning_wakeup_source);
+	delta_kt = ktime_sub(now_kt, chip->learning_data.time_stamp);
+	chip->learning_data.time_stamp = now_kt;
+	chip->learning_data.cc_uah -= cc_uah;
+		pr_info("total_cc_uah = %lld\n", chip->learning_data.cc_uah);
+	mutex_unlock(&chip->learning_data.learning_lock);
+	if (!chip->learning_data.active)
+			abs(cc_pc_val - chip->learning_data.init_cc_pc_val)
+			chip->learning_data.learned_cc_uah * cc_soc_delta_pc,
+	chip->learning_data.cc_uah = delta_cc_uah + chip->learning_data.cc_uah;
+				chip->learning_data.cc_uah);
+	if (chip->learning_data.active) {
+		schedule_work(&chip->fg_cap_learning_work);
+	int64_t old_cap = chip->learning_data.learned_cc_uah;
+		chip->learning_data.learned_cc_uah = cc_mah * 1000;
+					chip->learning_data.learned_cc_uah,
+	cc_mah = div64_s64(chip->learning_data.learned_cc_uah, 1000);
+				chip->learning_data.learned_cc_uah,
+	if (chip->learning_data.feedback_on) {
+	max_inc_val = chip->learning_data.learned_cc_uah
+			* (1000 + chip->learning_data.max_increment);
+	min_dec_val = chip->learning_data.learned_cc_uah
+			* (1000 - chip->learning_data.max_decrement);
+	old_cap = chip->learning_data.learned_cc_uah;
+	if (chip->learning_data.cc_uah > max_inc_val)
+		chip->learning_data.learned_cc_uah = max_inc_val;
+	else if (chip->learning_data.cc_uah < min_dec_val)
+		chip->learning_data.learned_cc_uah = min_dec_val;
+		chip->learning_data.learned_cc_uah =
+			chip->learning_data.cc_uah;
+				chip->learning_data.cc_uah,
+				old_cap, chip->learning_data.learned_cc_uah);
+	mutex_lock(&chip->learning_data.learning_lock);
+	if (chip->status == POWER_SUPPLY_STATUS_CHARGING
+				&& !chip->learning_data.active
+				&& chip->batt_aging_mode == FG_AGING_CC) {
+		if (chip->learning_data.learned_cc_uah == 0) {
+		if (!chip->learning_data.feedback_on) {
+			vbat_est_thr_uv = chip->learning_data.vbat_est_thr_uv;
+				chip->learning_data.max_start_soc);
+				> chip->learning_data.max_start_soc) {
+					chip->learning_data.max_start_soc);
+		chip->learning_data.cc_uah = div64_s64(
+			(chip->learning_data.learned_cc_uah * battery_soc),
+		if (chip->wa_flag & USE_CC_SOC_REG) {
+			chip->learning_data.init_cc_pc_val = cc_pc_val;
+			chip->learning_data.active = true;
+					chip->learning_data.init_cc_pc_val);
+			chip->learning_data.time_stamp = ktime_get_boottime();
+			chip->learning_data.active = true;
+					chip->learning_data.cc_uah);
+			rc = alarm_start_relative(&chip->fg_cap_learning_alarm,
+	} else if ((chip->status != POWER_SUPPLY_STATUS_CHARGING)
+				&& chip->learning_data.active) {
+		if (!(chip->wa_flag & USE_CC_SOC_REG))
+			alarm_try_to_cancel(&chip->fg_cap_learning_alarm);
+		if (chip->status == POWER_SUPPLY_STATUS_FULL) {
+			if (chip->wa_flag & USE_CC_SOC_REG) {
+	mutex_unlock(&chip->learning_data.learning_lock);
+	if (!chip->usb_psy)
+		chip->usb_psy = power_supply_get_by_name("usb");
+	if (chip->usb_psy)
+		chip->usb_psy->get_property(chip->usb_psy,
+	if (!chip->dc_psy)
+		chip->dc_psy = power_supply_get_by_name("dc");
+	if (chip->dc_psy)
+		chip->dc_psy->get_property(chip->dc_psy,
+	if (!chip->usb_psy)
+		chip->usb_psy = power_supply_get_by_name("usb");
+	if (chip->usb_psy)
+		chip->usb_psy->get_property(chip->usb_psy,
+	if (!chip->batt_psy_name)
+	if (!chip->batt_psy)
+		chip->batt_psy = power_supply_get_by_name(chip->batt_psy_name);
+	if (!chip->batt_psy)
+	rc = chip->batt_psy->set_property(chip->batt_psy,
+	chip->charging_disabled = !enable;
+	if (chip->esr_pulse_tune_en) {
+		fg_stay_awake(&chip->esr_extract_wakeup_source);
+		schedule_work(&chip->esr_extract_config_work);
+	if (chip->status == POWER_SUPPLY_STATUS_FULL) {
+		if (capacity >= 99 && chip->hold_soc_while_full
+				&& chip->health == POWER_SUPPLY_HEALTH_GOOD) {
+			chip->charge_full = true;
+	if (chip->status == POWER_SUPPLY_STATUS_FULL ||
+			chip->status == POWER_SUPPLY_STATUS_CHARGING) {
+		if (!chip->vbat_low_irq_enabled) {
+			enable_irq(chip->batt_irq[VBATT_LOW].irq);
+			enable_irq_wake(chip->batt_irq[VBATT_LOW].irq);
+			chip->vbat_low_irq_enabled = true;
+		if (!!(chip->wa_flag & PULSE_REQUEST_WA) && capacity == 100)
+	} else if (chip->status == POWER_SUPPLY_STATUS_DISCHARGING) {
+		if (chip->vbat_low_irq_enabled) {
+			disable_irq_wake(chip->batt_irq[VBATT_LOW].irq);
+			disable_irq_nosync(chip->batt_irq[VBATT_LOW].irq);
+			chip->vbat_low_irq_enabled = false;
+	schedule_work(&chip->update_esr_work);
+	if (chip->wa_flag & USE_CC_SOC_REG) {
+	if (chip->prev_status != chip->status && chip->last_sram_update_time) {
+		if (chip->last_sram_update_time + 5 < current_time) {
+			cancel_delayed_work(&chip->update_sram_data);
+			schedule_delayed_work(&chip->update_sram_data,
+		if (chip->cyc_ctr.en)
+			schedule_work(&chip->cycle_count_work);
+		if ((chip->wa_flag & USE_CC_SOC_REG) &&
+				chip->bad_batt_detection_en &&
+				chip->status == POWER_SUPPLY_STATUS_CHARGING) {
+			chip->sw_cc_soc_data.init_sys_soc = capacity;
+			chip->sw_cc_soc_data.init_cc_soc = cc_soc;
+					chip->sw_cc_soc_data.init_sys_soc,
+					chip->sw_cc_soc_data.init_cc_soc);
+	if ((chip->wa_flag & USE_CC_SOC_REG) && chip->bad_batt_detection_en
+			&& chip->safety_timer_expired) {
+		chip->sw_cc_soc_data.delta_soc =
+					chip->sw_cc_soc_data.init_cc_soc)
+		chip->sw_cc_soc_data.full_capacity =
+			chip->sw_cc_soc_data.delta_soc +
+			chip->sw_cc_soc_data.init_sys_soc;
+				chip->sw_cc_soc_data.init_sys_soc,
+				chip->sw_cc_soc_data.init_cc_soc, cc_soc,
+				chip->sw_cc_soc_data.delta_soc,
+				chip->sw_cc_soc_data.full_capacity);
+		if (chip->sw_cc_soc_data.full_capacity >
+			chip->safety_timer_expired = false;
+	if ((chip->wa_flag & IADC_GAIN_COMP_WA)
+		&& ((chip->input_present ^ input_present)
+			|| (chip->otg_present ^ otg_present))) {
+		fg_stay_awake(&chip->gain_comp_wakeup_source);
+		chip->input_present = input_present;
+		chip->otg_present = otg_present;
+		cancel_work_sync(&chip->gain_comp_work);
+		schedule_work(&chip->gain_comp_work);
+	if (chip->health == POWER_SUPPLY_HEALTH_OVERHEAT && !chip->batt_hot) {
+		chip->batt_hot = true;
+			hard_hot - chip->hot_hysteresis);
+				hard_hot, hard_hot - chip->hot_hysteresis);
+	} else if (chip->health == POWER_SUPPLY_HEALTH_COLD &&
+		!chip->batt_cold) {
+		chip->batt_cold = true;
+			hard_cold + chip->cold_hysteresis);
+				hard_cold, hard_cold + chip->hot_hysteresis);
+	} else if (chip->health != POWER_SUPPLY_HEALTH_OVERHEAT &&
+		chip->batt_hot) {
+			hard_hot + chip->hot_hysteresis);
+		chip->batt_hot = !chip->batt_hot;
+				hard_hot + chip->hot_hysteresis);
+	} else if (chip->health != POWER_SUPPLY_HEALTH_COLD &&
+		chip->batt_cold) {
+			hard_cold - chip->cold_hysteresis);
+		chip->batt_cold = !chip->batt_cold;
+				hard_cold - chip->cold_hysteresis);
+		BATT_INFO_STS(chip->batt_base), 1);
+	chip->batt_hot =
+	chip->batt_cold =
+	if (chip->batt_hot || chip->batt_cold) {
+		if (chip->batt_hot) {
+			chip->health = POWER_SUPPLY_HEALTH_OVERHEAT;
+				hard_hot - chip->hot_hysteresis);
+			chip->health = POWER_SUPPLY_HEALTH_COLD;
+				hard_cold + chip->cold_hysteresis);
+		chip->prev_status = chip->status;
+		chip->status = val->intval;
+		schedule_work(&chip->status_change_work);
+		chip->health = val->intval;
+		if (chip->health == POWER_SUPPLY_HEALTH_GOOD) {
+			fg_stay_awake(&chip->resume_soc_wakeup_source);
+			schedule_work(&chip->set_resume_soc_work);
+		if (chip->jeita_hysteresis_support)
+		chip->charge_done = val->intval;
+		if (!chip->resume_soc_lowered) {
+			fg_stay_awake(&chip->resume_soc_wakeup_source);
+			schedule_work(&chip->set_resume_soc_work);
+			chip->cyc_ctr.id = val->intval;
+		chip->safety_timer_expired = val->intval;
+		schedule_work(&chip->status_change_work);
+		if (chip->wa_flag & BCL_HI_POWER_FOR_CHGLED_WA) {
+			chip->bcl_lpm_disabled = !!val->intval;
+			schedule_work(&chip->bcl_hi_power_work);
+	buffer = devm_kzalloc(chip->dev, SRAM_DUMP_LEN, GFP_KERNEL);
+	rc = fg_read(chip, &rt_sts, INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+	rc = fg_read(chip, &rt_sts, INT_RT_STS(chip->batt_base), 1);
+				INT_RT_STS(chip->batt_base), rc);
+	rc = fg_read(chip, &rt_sts, INT_RT_STS(chip->mem_base), 1);
+				INT_RT_STS(chip->mem_base), rc);
+	devm_kfree(chip->dev, buffer);
+	chip->batt_psy->get_property(chip->batt_psy,
+	if (!chip->esr_strict_filter) {
+				chip->status == POWER_SUPPLY_STATUS_CHARGING) ||
+			(chip->status == POWER_SUPPLY_STATUS_FULL)) {
+				chip->esr_strict_filter = true;
+				chip->status == POWER_SUPPLY_STATUS_CHARGING) ||
+			(chip->status == POWER_SUPPLY_STATUS_DISCHARGING)) {
+			chip->esr_strict_filter = false;
+	if (!chip->init_done)
+		numerator = (MICRO_UNIT + chip->iadc_comp_data.dfl_gain)
+		chip->iadc_comp_data.gain_active = true;
+		rc = fg_mem_write(chip, chip->iadc_comp_data.dfl_gain_reg,
+					chip->iadc_comp_data.dfl_gain_reg[1],
+					chip->iadc_comp_data.dfl_gain_reg[0]);
+		chip->iadc_comp_data.gain_active = false;
+	fg_relax(&chip->gain_comp_wakeup_source);
+				 INT_RT_STS(chip->batt_base), 1);
+				INT_RT_STS(chip->batt_base), rc);
+				 INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+	if (chip->status == POWER_SUPPLY_STATUS_CHARGING) {
+		if (!vbatt_low_sts && chip->vbat_low_irq_enabled) {
+			disable_irq_wake(chip->batt_irq[VBATT_LOW].irq);
+			disable_irq_nosync(chip->batt_irq[VBATT_LOW].irq);
+			chip->vbat_low_irq_enabled = false;
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+		chip->battery_missing = true;
+		chip->profile_loaded = false;
+		chip->batt_type = default_batt_type;
+		mutex_lock(&chip->cyc_ctr.lock);
+		mutex_unlock(&chip->cyc_ctr.lock);
+		if (!chip->use_otp_profile) {
+			reinit_completion(&chip->batt_id_avail);
+			reinit_completion(&chip->first_soc_done);
+			schedule_delayed_work(&chip->batt_profile_init, 0);
+			cancel_delayed_work(&chip->update_sram_data);
+				&chip->update_sram_data,
+			chip->battery_missing = false;
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	rc = fg_read(chip, &mem_if_sts, INT_RT_STS(chip->mem_base), 1);
+		reinit_completion(&chip->sram_access_revoked);
+		complete_all(&chip->sram_access_granted);
+		complete_all(&chip->sram_access_revoked);
+	rc = fg_read(chip, &soc_rt_sts, INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+	schedule_work(&chip->battery_age_work);
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	if (chip->rslow_comp.chg_rs_to_rslow > 0 &&
+			chip->rslow_comp.chg_rslow_comp_c1 > 0 &&
+			chip->rslow_comp.chg_rslow_comp_c2 > 0)
+		schedule_work(&chip->rslow_comp_work);
+	if (chip->cyc_ctr.en)
+		schedule_work(&chip->cycle_count_work);
+	schedule_work(&chip->update_esr_work);
+	if (chip->charge_full)
+		schedule_work(&chip->charge_full_work);
+	if (chip->wa_flag & IADC_GAIN_COMP_WA
+			&& chip->iadc_comp_data.gain_active) {
+		fg_stay_awake(&chip->gain_comp_wakeup_source);
+		schedule_work(&chip->gain_comp_work);
+	if (chip->wa_flag & USE_CC_SOC_REG
+			&& chip->learning_data.active) {
+		fg_stay_awake(&chip->capacity_learning_wakeup_source);
+		schedule_work(&chip->fg_cap_learning_work);
+	if (chip->esr_pulse_tune_en) {
+		fg_stay_awake(&chip->esr_extract_wakeup_source);
+		schedule_work(&chip->esr_extract_config_work);
+	rc = fg_read(chip, &soc_rt_sts, INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+		fg_stay_awake(&chip->empty_check_wakeup_source);
+		schedule_delayed_work(&chip->check_empty_work,
+		chip->soc_empty = false;
+		schedule_work(&chip->dump_sram);
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	complete_all(&chip->first_soc_done);
+	if (is_input_present(chip) && chip->rslow_comp.active &&
+			chip->rslow_comp.chg_rs_to_rslow > 0 &&
+			chip->rslow_comp.chg_rslow_comp_c1 > 0 &&
+			chip->rslow_comp.chg_rslow_comp_c2 > 0)
+		schedule_work(&chip->rslow_comp_work);
+	if (!is_input_present(chip) && chip->resume_soc_lowered) {
+		fg_stay_awake(&chip->resume_soc_wakeup_source);
+		schedule_work(&chip->set_resume_soc_work);
+	if (!is_input_present(chip) && chip->charge_full)
+		schedule_work(&chip->charge_full_work);
+	if (is_input_present(chip) && !chip->resume_soc_lowered) {
+		if (!chip->charge_done)
+		chip->charge_done = false;
+		chip->resume_soc_lowered = true;
+	} else if (chip->resume_soc_lowered && (!is_input_present(chip)
+				|| chip->health == POWER_SUPPLY_HEALTH_GOOD)) {
+		chip->resume_soc_lowered = false;
+	fg_relax(&chip->resume_soc_wakeup_source);
+		chip->ocv_coeffs[i] = half_float(buffer + (i * 2));
+				chip->ocv_coeffs[0], chip->ocv_coeffs[1],
+				chip->ocv_coeffs[2], chip->ocv_coeffs[3]);
+				chip->ocv_coeffs[4], chip->ocv_coeffs[5],
+				chip->ocv_coeffs[6], chip->ocv_coeffs[7]);
+				chip->ocv_coeffs[8], chip->ocv_coeffs[9],
+				chip->ocv_coeffs[10], chip->ocv_coeffs[11]);
+	chip->ocv_junction_p1p2 = buffer[0] * 100 / 255;
+	chip->ocv_junction_p2p3 = buffer[0] * 100 / 255;
+	chip->nom_cap_uah = bcap_uah_2b(buffer);
+	chip->actual_cap_uah = chip->nom_cap_uah;
+	if (chip->learning_data.learned_cc_uah == 0) {
+		chip->learning_data.learned_cc_uah = chip->nom_cap_uah;
+	} else if (chip->learning_data.feedback_on) {
+		cc_mah = div64_s64(chip->learning_data.learned_cc_uah, 1000);
+	chip->cutoff_voltage = voltage_2b(buffer);
+				chip->cutoff_voltage, chip->nom_cap_uah,
+				chip->ocv_junction_p1p2,
+				chip->ocv_junction_p2p3);
+	chip->rslow_comp.rslow_cfg = buffer[0];
+	chip->rslow_comp.rslow_thr = buffer[0];
+	memcpy(chip->rslow_comp.rs_to_rslow, buffer, 2);
+	memcpy(chip->rslow_comp.rslow_comp, buffer, 4);
+	mutex_lock(&chip->rslow_comp.lock);
+	half_float_to_buffer(chip->rslow_comp.chg_rs_to_rslow, buffer);
+	half_float_to_buffer(chip->rslow_comp.chg_rslow_comp_c1, buffer);
+	half_float_to_buffer(chip->rslow_comp.chg_rslow_comp_c2, buffer);
+	chip->rslow_comp.active = true;
+	mutex_unlock(&chip->rslow_comp.lock);
+	mutex_lock(&chip->rslow_comp.lock);
+	reg = chip->rslow_comp.rslow_cfg & RSLOW_CFG_ORIG_MASK;
+			0xFF, chip->rslow_comp.rslow_thr, RSLOW_THRESH_OFFSET);
+	rc = fg_mem_write(chip, chip->rslow_comp.rs_to_rslow,
+	rc = fg_mem_write(chip, chip->rslow_comp.rslow_comp,
+	chip->rslow_comp.active = false;
+	mutex_unlock(&chip->rslow_comp.lock);
+	if (battery_soc_1b > chip->rslow_comp.chg_rslow_comp_thr
+			&& chip->status == POWER_SUPPLY_STATUS_CHARGING) {
+		if (!chip->rslow_comp.active)
+		if (chip->rslow_comp.active)
+	if (!chip->cc_cv_threshold_mv)
+	batt_to_setpoint_adc(chip->cc_cv_threshold_mv, tmp);
+	if (slow == chip->imptr_pulse_slow_en) {
+	chip->imptr_pulse_slow_en = slow;
+	if (disable == chip->esr_extract_disabled) {
+	chip->esr_extract_disabled = disable;
+	fg_relax(&chip->esr_extract_wakeup_source);
+		if (!chip->charging_disabled) {
+				cancel_delayed_work(&chip->update_sram_data);
+				schedule_delayed_work(&chip->update_sram_data,
+	chip->fg_restarting = true;
+	if (chip->sw_rbias_ctrl) {
+	mutex_lock(&chip->rw_lock);
+	rc = fg_masked_write(chip, chip->soc_base + SOC_BOOT_MOD,
+	if (chip->batt_id_redo == 1)
+	rc = fg_masked_write(chip, chip->soc_base + SOC_RESTART,
+	mutex_unlock(&chip->rw_lock);
+	if (chip->first_profile_loaded)
+	mutex_lock(&chip->rw_lock);
+	atomic_add_return(1, &chip->memif_user_cnt);
+	mutex_unlock(&chip->rw_lock);
+		rc = fg_mem_write(chip, chip->batt_profile, BATT_PROFILE_OFFSET,
+				chip->batt_profile_len, 0, 1);
+	rc = wait_for_completion_interruptible_timeout(&chip->first_soc_done,
+	reinit_completion(&chip->first_soc_done);
+	if (chip->esr_pulse_tune_en) {
+		fg_stay_awake(&chip->esr_extract_wakeup_source);
+		schedule_work(&chip->esr_extract_config_work);
+	rc = fg_masked_write(chip, chip->soc_base + SOC_BOOT_MOD,
+	if (chip->batt_id_redo == 1)
+	rc = fg_masked_write(chip, chip->soc_base + SOC_RESTART,
+	rc = wait_for_completion_interruptible_timeout(&chip->first_soc_done,
+	rc = fg_read(chip, &reg, INT_RT_STS(chip->soc_base), 1);
+				INT_RT_STS(chip->soc_base), rc);
+	rc = fg_masked_write(chip, chip->soc_base + SOC_BOOT_MOD,
+	if (chip->batt_id_redo == 1)
+	rc = fg_masked_write(chip, chip->soc_base + SOC_RESTART,
+	if (chip->sw_rbias_ctrl) {
+	if (chip->charging_disabled) {
+			chip->charging_disabled = false;
+	chip->fg_restarting = false;
+	mutex_unlock(&chip->rw_lock);
+	chip->fg_restarting = false;
+	struct device_node *node = chip->spmi->dev.of_node;
+	fg_stay_awake(&chip->profile_wakeup_source);
+	ret = wait_for_completion_interruptible_timeout(&chip->batt_id_avail,
+	if ((!batt_id_is_vaild(get_sram_prop_now(chip, FG_DATA_BATT_ID))) && (chip->batt_id_redo == -1)) {
+		chip->batt_id_redo = 1;
+		chip->batt_id_redo = 0;
+					&chip->rslow_comp.chg_rs_to_rslow);
+		chip->rslow_comp.chg_rs_to_rslow = -EINVAL;
+					&chip->rslow_comp.chg_rslow_comp_c1);
+		chip->rslow_comp.chg_rslow_comp_c1 = -EINVAL;
+					&chip->rslow_comp.chg_rslow_comp_c2);
+		chip->rslow_comp.chg_rslow_comp_c2 = -EINVAL;
+					&chip->rslow_comp.chg_rslow_comp_thr);
+		chip->rslow_comp.chg_rslow_comp_thr = -EINVAL;
+					&chip->batt_max_voltage_uv);
+	if (!of_find_property(chip->spmi->dev.of_node,
+				&chip->cc_cv_threshold_mv);
+	if (!chip->batt_profile)
+		chip->batt_profile = devm_kzalloc(chip->dev,
+	if (!chip->batt_profile) {
+	rc = fg_mem_read(chip, chip->batt_profile, BATT_PROFILE_OFFSET,
+	if (!chip->charging_disabled) {
+	profiles_same = memcmp(chip->batt_profile, data,
+		if (chip->learning_data.learned_cc_uah < 3300000) {
+			chip->learning_data.learned_cc_uah = 0;
+				schedule_work(&chip->dump_sram);
+		chip->learning_data.learned_cc_uah = 0;
+		dump_sram(&chip->dump_sram);
+				chip->batt_profile, len, false);
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	memcpy(chip->batt_profile, data, len);
+	chip->batt_profile_len = len;
+				DUMP_PREFIX_NONE, 16, 1, chip->batt_profile,
+				chip->batt_profile_len, false);
+	if (!of_find_property(chip->spmi->dev.of_node,
+			memcpy(chip->thermal_coefficients, data, len);
+			rc = fg_mem_write(chip, chip->thermal_coefficients,
+	if (chip->charging_disabled) {
+			chip->charging_disabled = false;
+		chip->batt_type = fg_batt_type;
+		chip->batt_type = batt_type_str;
+	chip->first_profile_loaded = true;
+	chip->profile_loaded = true;
+	chip->battery_missing = is_battery_missing(chip);
+	estimate_battery_age(chip, &chip->actual_cap_uah);
+	schedule_work(&chip->status_change_work);
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	fg_relax(&chip->profile_wakeup_source);
+	if (chip->charging_disabled) {
+			chip->charging_disabled = false;
+	if (chip->power_supply_registered)
+		power_supply_changed(&chip->bms_psy);
+	fg_relax(&chip->profile_wakeup_source);
+		&chip->batt_profile_init,
+	fg_relax(&chip->profile_wakeup_source);
+		chip->soc_empty = true;
+		if (chip->power_supply_registered)
+			power_supply_changed(&chip->bms_psy);
+	fg_relax(&chip->empty_check_wakeup_source);
+	mutex_lock(&chip->sysfs_restart_lock);
+	mutex_unlock(&chip->sysfs_restart_lock);
+	if (chip->status != POWER_SUPPLY_STATUS_FULL) {
+			pr_info("battery not full: %d\n", chip->status);
+		chip->charge_full = false;
+	if (chip->bcl_lpm_disabled) {
+	retval = of_property_read_u32(chip->spmi->dev.of_node,		\
+	retval = of_property_read_u32(chip->spmi->dev.of_node,		\
+	struct device_node *node = chip->spmi->dev.of_node;
+		chip->jeita_hysteresis_support = true;
+		chip->cold_hysteresis = temp[0];
+		chip->hot_hysteresis = temp[1];
+		if (((hard_hot - chip->hot_hysteresis) < soft_hot) ||
+			((hard_cold + chip->cold_hysteresis) > soft_cold)) {
+			chip->jeita_hysteresis_support = false;
+				chip->hot_hysteresis, chip->cold_hysteresis);
+				chip->cold_hysteresis, chip->hot_hysteresis);
+	data = of_get_property(chip->spmi->dev.of_node,
+		memcpy(chip->thermal_coefficients, data, len);
+		chip->use_thermal_coefficients = true;
+	OF_READ_PROPERTY(chip->learning_data.max_increment,
+	OF_READ_PROPERTY(chip->learning_data.max_decrement,
+	OF_READ_PROPERTY(chip->learning_data.max_temp,
+	OF_READ_PROPERTY(chip->learning_data.min_temp,
+	OF_READ_PROPERTY(chip->learning_data.max_start_soc,
+	OF_READ_PROPERTY(chip->learning_data.vbat_est_thr_uv,
+	OF_READ_PROPERTY(chip->evaluation_current,
+	OF_READ_PROPERTY(chip->cc_cv_threshold_mv,
+	if (of_property_read_bool(chip->spmi->dev.of_node,
+		chip->batt_aging_mode = FG_AGING_CC;
+	else if (of_property_read_bool(chip->spmi->dev.of_node,
+		chip->batt_aging_mode = FG_AGING_ESR;
+		chip->batt_aging_mode = FG_AGING_NONE;
+	if (chip->batt_aging_mode == FG_AGING_CC) {
+		chip->learning_data.feedback_on = of_property_read_bool(
+					chip->spmi->dev.of_node,
+		pr_info("battery aging mode: %d\n", chip->batt_aging_mode);
+	chip->use_otp_profile = of_property_read_bool(
+			chip->spmi->dev.of_node,
+	chip->hold_soc_while_full = of_property_read_bool(
+			chip->spmi->dev.of_node,
+	sense_type = of_property_read_bool(chip->spmi->dev.of_node,
+	chip->bad_batt_detection_en = of_property_read_bool(node,
+	chip->sw_rbias_ctrl = of_property_read_bool(node,
+	chip->cyc_ctr.en = of_property_read_bool(node,
+	if (chip->cyc_ctr.en)
+		chip->cyc_ctr.id = 1;
+	chip->esr_pulse_tune_en = of_property_read_bool(node,
+	struct spmi_device *spmi = chip->spmi;
+		if ((resource->start == chip->vbat_adc_addr) ||
+				(resource->start == chip->ibat_adc_addr) ||
+				(resource->start == chip->tp_rev_addr))
+			chip->soc_irq[FULL_SOC].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource, "full-soc");
+			if (chip->soc_irq[FULL_SOC].irq < 0) {
+			chip->soc_irq[EMPTY_SOC].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource, "empty-soc");
+			if (chip->soc_irq[EMPTY_SOC].irq < 0) {
+			chip->soc_irq[DELTA_SOC].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource, "delta-soc");
+			if (chip->soc_irq[DELTA_SOC].irq < 0) {
+			chip->soc_irq[FIRST_EST_DONE].irq = spmi_get_irq_byname(
+				chip->spmi, spmi_resource, "first-est-done");
+			if (chip->soc_irq[FIRST_EST_DONE].irq < 0) {
+			rc = devm_request_irq(chip->dev,
+				chip->soc_irq[FULL_SOC].irq,
+					chip->soc_irq[FULL_SOC].irq, rc);
+			rc = devm_request_irq(chip->dev,
+				chip->soc_irq[EMPTY_SOC].irq,
+					chip->soc_irq[EMPTY_SOC].irq, rc);
+			rc = devm_request_irq(chip->dev,
+				chip->soc_irq[DELTA_SOC].irq,
+					chip->soc_irq[DELTA_SOC].irq, rc);
+			rc = devm_request_irq(chip->dev,
+				chip->soc_irq[FIRST_EST_DONE].irq,
+					chip->soc_irq[FIRST_EST_DONE].irq, rc);
+			enable_irq_wake(chip->soc_irq[DELTA_SOC].irq);
+			enable_irq_wake(chip->soc_irq[FULL_SOC].irq);
+			enable_irq_wake(chip->soc_irq[EMPTY_SOC].irq);
+			chip->mem_irq[FG_MEM_AVAIL].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource, "mem-avail");
+			if (chip->mem_irq[FG_MEM_AVAIL].irq < 0) {
+			rc = devm_request_irq(chip->dev,
+					chip->mem_irq[FG_MEM_AVAIL].irq,
+					chip->mem_irq[FG_MEM_AVAIL].irq, rc);
+			chip->batt_irq[BATT_IDENTIFIED].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource,
+			if (chip->batt_irq[BATT_IDENTIFIED].irq < 0) {
+			rc = devm_request_threaded_irq(chip->dev,
+					chip->batt_irq[BATT_IDENTIFIED].irq,
+					chip->batt_irq[BATT_IDENTIFIED].irq, rc);
+			chip->batt_irq[BATT_MISSING].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource,
+			if (chip->batt_irq[BATT_MISSING].irq < 0) {
+			rc = devm_request_threaded_irq(chip->dev,
+					chip->batt_irq[BATT_MISSING].irq,
+					chip->batt_irq[BATT_MISSING].irq, rc);
+			chip->batt_irq[VBATT_LOW].irq = spmi_get_irq_byname(
+					chip->spmi, spmi_resource,
+			if (chip->batt_irq[VBATT_LOW].irq < 0) {
+			rc = devm_request_irq(chip->dev,
+					chip->batt_irq[VBATT_LOW].irq,
+					chip->batt_irq[VBATT_LOW].irq, rc);
+			disable_irq_nosync(chip->batt_irq[VBATT_LOW].irq);
+			chip->vbat_low_irq_enabled = false;
+	cancel_delayed_work_sync(&chip->update_sram_data);
+	cancel_delayed_work_sync(&chip->update_temp_work);
+	cancel_delayed_work_sync(&chip->update_jeita_setting);
+	cancel_delayed_work_sync(&chip->check_empty_work);
+	cancel_delayed_work_sync(&chip->batt_profile_init);
+	alarm_try_to_cancel(&chip->fg_cap_learning_alarm);
+	cancel_work_sync(&chip->rslow_comp_work);
+	cancel_work_sync(&chip->set_resume_soc_work);
+	cancel_work_sync(&chip->fg_cap_learning_work);
+	cancel_work_sync(&chip->dump_sram);
+	cancel_work_sync(&chip->status_change_work);
+	cancel_work_sync(&chip->cycle_count_work);
+	cancel_work_sync(&chip->update_esr_work);
+	cancel_work_sync(&chip->sysfs_restart_work);
+	cancel_work_sync(&chip->gain_comp_work);
+	cancel_work_sync(&chip->init_work);
+	cancel_work_sync(&chip->charge_full_work);
+	cancel_work_sync(&chip->esr_extract_config_work);
+	power_supply_unregister(&chip->bms_psy);
+	mutex_destroy(&chip->rslow_comp.lock);
+	mutex_destroy(&chip->rw_lock);
+	mutex_destroy(&chip->cyc_ctr.lock);
+	mutex_destroy(&chip->learning_data.learning_lock);
+	mutex_destroy(&chip->sysfs_restart_lock);
+	wakeup_source_trash(&chip->resume_soc_wakeup_source.source);
+	wakeup_source_trash(&chip->empty_check_wakeup_source.source);
+	wakeup_source_trash(&chip->memif_wakeup_source.source);
+	wakeup_source_trash(&chip->profile_wakeup_source.source);
+	wakeup_source_trash(&chip->update_temp_wakeup_source.source);
+	wakeup_source_trash(&chip->update_sram_wakeup_source.source);
+	wakeup_source_trash(&chip->gain_comp_wakeup_source.source);
+	wakeup_source_trash(&chip->capacity_learning_wakeup_source.source);
+	wakeup_source_trash(&chip->esr_extract_wakeup_source.source);
+	if (chip->tp_rev_addr == 0)
+	rc = fg_read(chip, &reg, chip->tp_rev_addr, 1);
+	rc = fg_masked_write(chip, chip->soc_base + SEC_ACCESS_REG,
+	rc |= fg_masked_write(chip, chip->soc_base + EXT_OFFSET_TRIM_REG,
+	if (chip->use_thermal_coefficients) {
+		fg_mem_write(chip, chip->thermal_coefficients,
+	if (!chip->sw_rbias_ctrl) {
+	if (chip->cyc_ctr.en)
+	if (chip->esr_pulse_tune_en) {
+			chip->esr_extract_disabled = true;
+				chip->esr_extract_disabled ? "dis" : "en");
+			chip->imptr_pulse_slow_en = true;
+				chip->imptr_pulse_slow_en ? "en" : "dis");
+	if (chip->pmic_revision[REVID_DIG_MAJOR] == 1
+			&& chip->pmic_revision[REVID_ANA_MAJOR] == 0) {
+	switch (chip->pmic_subtype) {
+		chip->wa_flag |= PULSE_REQUEST_WA;
+			chip->wa_flag |= IADC_GAIN_COMP_WA;
+		if (chip->pmic_revision[REVID_DIG_MAJOR] > 1)
+			chip->wa_flag |= USE_CC_SOC_REG;
+		chip->wa_flag |= BCL_HI_POWER_FOR_CHGLED_WA;
+			chip->wa_flag |= IADC_GAIN_COMP_WA;
+		if (chip->pmic_revision[REVID_DIG_MAJOR] > 1)
+			chip->wa_flag |= USE_CC_SOC_REG;
+	pr_debug("wa_flag=0x%x\n", chip->wa_flag);
+	rc = fg_read(chip, chip->revision, chip->mem_base + DIG_MINOR, 4);
+	switch (chip->revision[DIG_MAJOR]) {
+		chip->offset = offset[0].address;
+		chip->offset = offset[1].address;
+		chip->ima_supported = true;
+	if (chip->ima_supported) {
+			chip->mem_base + MEM_INTF_IMA_CFG, IACS_INTR_SRC_SLCT,
+	revid_dev_node = of_parse_phandle(chip->spmi->dev.of_node,
+		chip->pmic_subtype = pmic_rev_id->pmic_subtype;
+		chip->pmic_revision[REVID_RESERVED]	= pmic_rev_id->rev1;
+		chip->pmic_revision[REVID_VARIANT]	= pmic_rev_id->rev2;
+		chip->pmic_revision[REVID_ANA_MAJOR]	= pmic_rev_id->rev3;
+		chip->pmic_revision[REVID_DIG_MAJOR]	= pmic_rev_id->rev4;
+		&chip->update_jeita_setting,
+	if (chip->last_sram_update_time == 0)
+		update_sram_data_work(&chip->update_sram_data.work);
+	if (chip->last_temp_update_time == 0)
+		update_temp_data(&chip->update_temp_work.work);
+	if (!chip->use_otp_profile)
+		schedule_delayed_work(&chip->batt_profile_init, 0);
+	if (chip->wa_flag & IADC_GAIN_COMP_WA) {
+		chip->iadc_comp_data.dfl_gain_reg[0] = reg[0];
+		chip->iadc_comp_data.dfl_gain_reg[1] = reg[1];
+		chip->iadc_comp_data.dfl_gain = half_float(reg);
+		chip->input_present = is_input_present(chip);
+		chip->otg_present = is_otg_present(chip);
+		chip->init_done = true;
+			       reg[1], reg[0], chip->iadc_comp_data.dfl_gain);
+	chip->spmi = spmi;
+	chip->dev = &(spmi->dev);
+	chip->monotonic_soc_old = -1;
+	chip->batt_id_redo = -1;
+	wakeup_source_init(&chip->empty_check_wakeup_source.source,
+	wakeup_source_init(&chip->memif_wakeup_source.source,
+	wakeup_source_init(&chip->profile_wakeup_source.source,
+	wakeup_source_init(&chip->update_temp_wakeup_source.source,
+	wakeup_source_init(&chip->update_sram_wakeup_source.source,
+	wakeup_source_init(&chip->resume_soc_wakeup_source.source,
+	wakeup_source_init(&chip->gain_comp_wakeup_source.source,
+	wakeup_source_init(&chip->capacity_learning_wakeup_source.source,
+	wakeup_source_init(&chip->esr_extract_wakeup_source.source,
+	mutex_init(&chip->rw_lock);
+	mutex_init(&chip->cyc_ctr.lock);
+	mutex_init(&chip->learning_data.learning_lock);
+	mutex_init(&chip->rslow_comp.lock);
+	mutex_init(&chip->sysfs_restart_lock);
+	INIT_DELAYED_WORK(&chip->update_jeita_setting, update_jeita_setting);
+	INIT_DELAYED_WORK(&chip->update_sram_data, update_sram_data_work);
+	INIT_DELAYED_WORK(&chip->update_temp_work, update_temp_data);
+	INIT_DELAYED_WORK(&chip->check_empty_work, check_empty_work);
+	INIT_DELAYED_WORK(&chip->batt_profile_init, batt_profile_init);
+	INIT_WORK(&chip->rslow_comp_work, rslow_comp_work);
+	INIT_WORK(&chip->fg_cap_learning_work, fg_cap_learning_work);
+	INIT_WORK(&chip->dump_sram, dump_sram);
+	INIT_WORK(&chip->status_change_work, status_change_work);
+	INIT_WORK(&chip->cycle_count_work, update_cycle_count);
+	INIT_WORK(&chip->battery_age_work, battery_age_work);
+	INIT_WORK(&chip->update_esr_work, update_esr_value);
+	INIT_WORK(&chip->set_resume_soc_work, set_resume_soc_work);
+	INIT_WORK(&chip->sysfs_restart_work, sysfs_restart_work);
+	INIT_WORK(&chip->init_work, delayed_init_work);
+	INIT_WORK(&chip->charge_full_work, charge_full_work);
+	INIT_WORK(&chip->gain_comp_work, iadc_gain_comp_work);
+	INIT_WORK(&chip->bcl_hi_power_work, bcl_hi_power_work);
+	INIT_WORK(&chip->esr_extract_config_work, esr_extract_config_work);
+	alarm_init(&chip->fg_cap_learning_alarm, ALARM_BOOTTIME,
+	init_completion(&chip->sram_access_granted);
+	init_completion(&chip->sram_access_revoked);
+	complete_all(&chip->sram_access_revoked);
+	init_completion(&chip->batt_id_avail);
+	init_completion(&chip->first_soc_done);
+			chip->vbat_adc_addr = resource->start;
+			chip->ibat_adc_addr = resource->start;
+			chip->tp_rev_addr = resource->start;
+			chip->soc_base = resource->start;
+			chip->mem_base = resource->start;
+			chip->batt_base = resource->start;
+	if (chip->jeita_hysteresis_support) {
+		complete_all(&chip->first_soc_done);
+	rc = fg_write(chip, &reg, INT_EN_CLR(chip->mem_base), 1);
+	chip->batt_type = default_batt_type;
+	chip->bms_psy.name = "bms";
+	chip->bms_psy.type = POWER_SUPPLY_TYPE_BMS;
+	chip->bms_psy.properties = fg_power_props;
+	chip->bms_psy.num_properties = ARRAY_SIZE(fg_power_props);
+	chip->bms_psy.get_property = fg_power_get_property;
+	chip->bms_psy.set_property = fg_power_set_property;
+	chip->bms_psy.external_power_changed = fg_external_power_changed;
+	chip->bms_psy.supplied_to = fg_supplicants;
+	chip->bms_psy.num_supplicants = ARRAY_SIZE(fg_supplicants);
+	chip->bms_psy.property_is_writeable = fg_property_is_writeable;
+	rc = power_supply_register(chip->dev, &chip->bms_psy);
+	chip->power_supply_registered = true;
+	chip->batt_psy_name = "battery";
+	if (chip->mem_base) {
+	schedule_work(&chip->init_work);
+		chip->revision[DIG_MAJOR], chip->revision[DIG_MINOR],
+		chip->revision[ANA_MAJOR], chip->revision[ANA_MINOR],
+		chip->pmic_subtype);
+	power_supply_unregister(&chip->bms_psy);
+	cancel_delayed_work_sync(&chip->update_jeita_setting);
+	cancel_delayed_work_sync(&chip->update_sram_data);
+	cancel_delayed_work_sync(&chip->update_temp_work);
+	cancel_delayed_work_sync(&chip->check_empty_work);
+	cancel_delayed_work_sync(&chip->batt_profile_init);
+	alarm_try_to_cancel(&chip->fg_cap_learning_alarm);
+	cancel_work_sync(&chip->set_resume_soc_work);
+	cancel_work_sync(&chip->fg_cap_learning_work);
+	cancel_work_sync(&chip->dump_sram);
+	cancel_work_sync(&chip->status_change_work);
+	cancel_work_sync(&chip->cycle_count_work);
+	cancel_work_sync(&chip->update_esr_work);
+	cancel_work_sync(&chip->rslow_comp_work);
+	cancel_work_sync(&chip->sysfs_restart_work);
+	cancel_work_sync(&chip->gain_comp_work);
+	cancel_work_sync(&chip->init_work);
+	cancel_work_sync(&chip->charge_full_work);
+	cancel_work_sync(&chip->bcl_hi_power_work);
+	cancel_work_sync(&chip->esr_extract_config_work);
+	mutex_destroy(&chip->rslow_comp.lock);
+	mutex_destroy(&chip->rw_lock);
+	mutex_destroy(&chip->cyc_ctr.lock);
+	mutex_destroy(&chip->learning_data.learning_lock);
+	mutex_destroy(&chip->sysfs_restart_lock);
+	wakeup_source_trash(&chip->resume_soc_wakeup_source.source);
+	wakeup_source_trash(&chip->empty_check_wakeup_source.source);
+	wakeup_source_trash(&chip->memif_wakeup_source.source);
+	wakeup_source_trash(&chip->profile_wakeup_source.source);
+	wakeup_source_trash(&chip->update_temp_wakeup_source.source);
+	wakeup_source_trash(&chip->update_sram_wakeup_source.source);
+	wakeup_source_trash(&chip->gain_comp_wakeup_source.source);
+	wakeup_source_trash(&chip->capacity_learning_wakeup_source.source);
+	wakeup_source_trash(&chip->esr_extract_wakeup_source.source);
+	next_update_time = chip->last_temp_update_time
+		&chip->update_temp_work, msecs_to_jiffies(time_left * 1000));
+	next_update_time = chip->last_sram_update_time
+		&chip->update_sram_data, msecs_to_jiffies(time_left * 1000));
+	if (!chip->sw_rbias_ctrl)
+	cancel_delayed_work(&chip->update_temp_work);
+	cancel_delayed_work(&chip->update_sram_data);
+	if (!chip->sw_rbias_ctrl)
+	mutex_lock(&chip->sysfs_restart_lock);
+		mutex_unlock(&chip->sysfs_restart_lock);
+	mutex_unlock(&chip->sysfs_restart_lock);
+	schedule_work(&chip->sysfs_restart_work);
