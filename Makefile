@@ -5,7 +5,7 @@ EXTRAVERSION =
 NAME = Diseased Newt
 ARCH=arm64
 SUBARCH=arm64
-CROSS_COMPILE=aarch64-linux-android-
+CROSS_COMPILE=aarch64-linux-gnu-
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
