@@ -2721,6 +2721,7 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 			preallocated = true;
 			target_size = pos + count;
 		}
+
 		err = f2fs_preallocate_blocks(inode, pos, count,
 				file->f_flags & O_DIRECT);
 		if (err) {
@@ -2733,9 +2734,11 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 		blk_finish_plug(&plug);
 		clear_inode_flag(inode, FI_NO_PREALLOC);
 
+
 		/* if we couldn't write data, we should deallocate blocks. */
 		if (preallocated && i_size_read(inode) < target_size)
 			f2fs_truncate(inode);
+
 
 		if (ret > 0)
 			f2fs_update_iostat(F2FS_I_SB(inode), APP_WRITE_IO, ret);
