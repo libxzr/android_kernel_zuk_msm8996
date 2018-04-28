@@ -1,0 +1,18 @@
+#!/bin/bash
+export ARCH=arm64
+export SUBARCH=arm64
+export CROSS_COMPILE=aarch64-linux-gnu-
+
+z2_plus(){
+export KBUILD_BUILD_USER="z2_plus"
+export KBUILD_BUILD_HOST="LibXZR"
+make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j16
+}
+
+z2_row(){
+export KBUILD_BUILD_USER="z2_row"
+export KBUILD_BUILD_HOST="LibXZR"
+make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j16
+}
+
+z2_plus
