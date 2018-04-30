@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -4327,11 +4327,9 @@ void mdss_mdp_check_ctl_reset_status(struct mdss_mdp_ctl *ctl)
 		return;
 
 	pr_debug("hw ctl reset is set for ctl:%d\n", ctl->num);
-	/* poll for at least ~1 frame */
-	status = mdss_mdp_poll_ctl_reset_status(ctl, 320);
+	status = mdss_mdp_poll_ctl_reset_status(ctl, 5);
 	if (status) {
-		pr_err("hw recovery is not complete for ctl:%d status:0x%x\n",
-			ctl->num, status);
+		pr_err("hw recovery is not complete for ctl:%d\n", ctl->num);
 		MDSS_XLOG_TOUT_HANDLER("mdp", "vbif", "vbif_nrt", "dbg_bus",
 			"vbif_dbg_bus", "panic");
 	}

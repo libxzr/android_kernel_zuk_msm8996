@@ -79,17 +79,8 @@ static long ipa3_wan_ioctl(struct file *filp,
 		DRIVER_NAME);
 
 	if (!ipa3_process_ioctl) {
-
-		if ((cmd == WAN_IOC_SET_LAN_CLIENT_INFO) ||
-			(cmd == WAN_IOC_CLEAR_LAN_CLIENT_INFO)) {
-			IPAWANDBG("Modem is in SSR\n");
-			IPAWANDBG("Still allow IOCTL for exceptions (%d)\n",
-				cmd);
-		} else {
-			IPAWANERR("Modem is in SSR, ignoring ioctl (%d)\n",
-				cmd);
-			return -EAGAIN;
-		}
+		IPAWANDBG("modem is in SSR, ignoring ioctl\n");
+		return -EAGAIN;
 	}
 
 	switch (cmd) {
