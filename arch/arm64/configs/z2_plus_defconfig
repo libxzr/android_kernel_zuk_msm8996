@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-CONFIG_LOCALVERSION="-NamelessKernel[OC]"
+CONFIG_LOCALVERSION="-NamelessKernel[Treble]"
 # CONFIG_LOCALVERSION_AUTO is not set
 # CONFIG_USELIB is not set
 CONFIG_AUDIT=y
