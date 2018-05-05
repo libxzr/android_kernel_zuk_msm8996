@@ -6291,6 +6291,7 @@ static long effective_load(struct task_group *tg, int cpu, long wl, long wg)
 		if (wl < MIN_SHARES)
 			wl = MIN_SHARES;
 
+
 		/*
 		 * wl = dw_i = S * (s'_i - s_i); see (3)
 		 */

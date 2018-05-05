@@ -497,6 +497,7 @@ static void binder_delete_free_buffer(struct binder_alloc *alloc,
 	list_del(&buffer->entry);
 	if (free_page_start || free_page_end) {
 		binder_alloc_debug(BINDER_DEBUG_BUFFER_ALLOC,
+
 			     "%d: merge free, buffer %pK do not share page%s%s with %pK or %pK\n",
 			     alloc->pid, buffer, free_page_start ? "" : " end",
 			     free_page_end ? "" : " start", prev, next);
@@ -504,6 +505,7 @@ static void binder_delete_free_buffer(struct binder_alloc *alloc,
 			buffer_start_page(buffer) : buffer_end_page(buffer),
 			(free_page_end ? buffer_end_page(buffer) :
 			buffer_start_page(buffer)) + PAGE_SIZE, NULL);
+
 	}
 }
 

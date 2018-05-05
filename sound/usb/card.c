@@ -230,6 +230,7 @@ static int snd_usb_create_streams(struct snd_usb_audio *chip, int ctrlif)
 		return -EINVAL;
 	}
 
+
 	/* find audiocontrol interface */
 	host_iface = &usb_iface->altsetting[0];
 	if (!host_iface) {
