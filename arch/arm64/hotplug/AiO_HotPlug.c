@@ -69,7 +69,9 @@ static void __ref AiO_HotPlug_work(struct work_struct *work)
 	     // Operations for big Cluster.
 	     if (state_suspended) 
 	     {  
-			 for (int i=3 ; i > AiO.suspended_cores ; i--) {
+	          int i;
+
+		for (i=3 ; i > AiO.suspended_cores ; i--) {
 			 cpu_offline_wrapper(i);}
 	     }
 	     else 
