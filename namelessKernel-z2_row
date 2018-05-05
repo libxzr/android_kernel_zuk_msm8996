@@ -11,9 +11,9 @@ make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j16
 cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 cd ~/AnyKernel2
 git checkout z2_plus_treble
-zip -r $zipname *
-cp -f $zipname ~
-rm -f $zipname
+zip -r "$zipname" *
+cp -f "$zipname" ~
+rm -f "$zipname"
 }
 
 z2_row
