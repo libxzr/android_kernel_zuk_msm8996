@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -9,9 +9,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-#ifdef CONFIG_ZUK_CAMERA
-#include <media/msmb_isp_zuk.h>
-#else
 #ifndef __MSMB_ISP__
 #define __MSMB_ISP__
 
@@ -31,20 +28,7 @@ struct msm_isp_event_data32 {
 		struct msm_isp_sof_info sof_info;
 	} u;
 };
-
-struct msm_isp32_event_data32 {
-	struct compat_timeval timestamp;
-	struct compat_timeval mono_timestamp;
-	enum msm_vfe_input_src input_intf;
-	uint32_t frame_id;
-	union {
-		struct msm_isp_stats_event stats;
-		struct msm_isp_buf_event buf_done;
-		struct msm_isp32_error_info error_info;
-	} u;
-};
+#endif
 
 #endif
-#endif /* __MSMB_ISP__ */
 
-#endif /* CONFIG_ZUK_CAMERA */

@@ -1,6 +1,3 @@
-#ifdef CONFIG_ZUK_CAMERA
-#include <media/msm_cam_sensor_zuk.h>
-#else
 #ifndef __LINUX_MSM_CAM_SENSOR_H
 #define __LINUX_MSM_CAM_SENSOR_H
 
@@ -122,6 +119,8 @@ struct msm_camera_i2c_seq_reg_setting32 {
 	uint16_t delay;
 };
 
+#endif
+
 struct msm_camera_i2c_reg_setting32 {
 	compat_uptr_t reg_setting;
 	uint16_t size;
@@ -150,8 +149,8 @@ struct msm_actuator_params_t32 {
 	uint16_t init_setting_size;
 	uint32_t i2c_addr;
 	enum i2c_freq_mode_t i2c_freq_mode;
-	enum msm_camera_i2c_reg_addr_type i2c_addr_type;
-	enum msm_camera_i2c_data_type i2c_data_type;
+	enum msm_actuator_addr_type i2c_addr_type;
+	enum msm_actuator_data_type i2c_data_type;
 	compat_uptr_t reg_tbl_params;
 	compat_uptr_t init_settings;
 	struct park_lens_data_t park_lens;
@@ -281,7 +280,3 @@ struct msm_flash_cfg_data_t32 {
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_ir_cut_cfg_data_t32)
 #endif
 
-#endif
-
-
-#endif /* CONFIG_ZUK_CAMERA */

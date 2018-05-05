@@ -1,4 +1,6 @@
+ifneq ($(CONFIG_ZUK_CAMERA),y)
 header-y += ais/
+endif
 header-y += msm_cam_sensor.h
 header-y += msm_camera.h
 header-y += msm_camsensor_sdk.h

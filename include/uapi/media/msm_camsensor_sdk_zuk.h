@@ -1,7 +1,3 @@
-#ifdef CONFIG_ZUK_CAMERA
-#include <uapi/media/msm_camsensor_sdk_zuk.h>
-#else
-
 #ifndef __UAPI_LINUX_MSM_CAMSENSOR_SDK_H
 #define __UAPI_LINUX_MSM_CAMSENSOR_SDK_H
 
@@ -51,8 +47,6 @@
 
 #define MSM_EEPROM_MEMORY_MAP_MAX_SIZE  80
 #define MSM_EEPROM_MAX_MEM_MAP_CNT      8
-
-#define MSM_SENSOR_BYPASS_VIDEO_NODE    1
 
 enum msm_sensor_camera_id_t {
 	CAMERA_0,
@@ -306,7 +300,6 @@ struct msm_camera_sensor_slave_info {
 	unsigned char  is_init_params_valid;
 	struct msm_sensor_init_params sensor_init_params;
 	enum msm_sensor_output_format_t output_format;
-	uint8_t bypass_video_node_creation;
 };
 
 struct msm_camera_i2c_reg_array {
@@ -422,5 +415,3 @@ struct msm_camera_i2c_reg_setting_array {
 };
 
 #endif
-
-#endif /* CONFIG_ZUK_CAMERA */

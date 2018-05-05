@@ -1,7 +1,3 @@
-#ifdef CONFIG_ZUK_CAMERA
-#include <uapi/media/radio-iris_zuk.h>
-#else
-
 #ifndef __UAPI_RADIO_IRIS_H
 #define __UAPI_RADIO_IRIS_H
 
@@ -613,9 +609,6 @@ struct hci_fm_spur_data {
 #define AF_SIZE_OFFSET 6
 #define AF_LIST_OFFSET 7
 #define RT_A_B_FLAG_OFFSET 4
-#define RDS_PS_OFFSET  1
-#define RDS_PS_SIMPLE_OFFSET 2
-
 /*FM states*/
 
 enum radio_state_t {
@@ -816,5 +809,3 @@ struct hci_fm_set_spur_table_req {
 #define AF_JUMP_ENABLE  (1 << 4)
 
 #endif
-
-#endif /* CONFIG_ZUK_CAMERA */
