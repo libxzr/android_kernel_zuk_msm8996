@@ -1768,6 +1768,15 @@ unsigned int __read_mostly sched_disable_window_stats;
  */
 #ifdef CONFIG_SCHED_FREQ_INPUT
 __read_mostly unsigned int sched_major_task_runtime = 10000000;
+#endif
+
+static unsigned int sync_cpu;
+
+static LIST_HEAD(related_thread_groups);
+static DEFINE_RWLOCK(related_thread_group_lock);
+
+#define for_each_related_thread_group(grp) \
+	list_for_each_entry(grp, &related_thread_groups, list)
 
 /*
  * Demand aggregation for frequency purpose:
@@ -1817,16 +1826,6 @@ __read_mostly unsigned int sched_major_task_runtime = 10000000;
  */
 static __read_mostly unsigned int sched_freq_aggregate;
 __read_mostly unsigned int sysctl_sched_freq_aggregate;
-
-#endif
-
-static unsigned int sync_cpu;
-
-static LIST_HEAD(related_thread_groups);
-static DEFINE_RWLOCK(related_thread_group_lock);
-
-#define for_each_related_thread_group(grp) \
-	list_for_each_entry(grp, &related_thread_groups, list)
 
 #define EXITING_TASK_MARKER	0xdeaddead
 
@@ -1879,9 +1878,6 @@ static inline u64 scale_exec_time(u64 delta, struct rq *rq)
 	return delta;
 }
 
-static inline struct group_cpu_time *
-_group_cpu_time(struct related_thread_group *grp, int cpu);
-
 #ifdef CONFIG_SCHED_FREQ_INPUT
 
 static inline int cpu_is_waiting_on_io(struct rq *rq)
@@ -1920,6 +1916,9 @@ static inline unsigned int load_to_freq(struct rq *rq, u64 load)
 
 	return freq;
 }
+
+static inline struct group_cpu_time *
+_group_cpu_time(struct related_thread_group *grp, int cpu);
 
 /*
  * Return load from all related group in given cpu.
@@ -2586,41 +2585,6 @@ static void update_cpu_busy_time(struct task_struct *p, struct rq *rq,
 	BUG();
 }
 
-static inline u32 predict_and_update_buckets(struct rq *rq,
-			struct task_struct *p, u32 runtime) {
-
-	int bidx;
-	u32 pred_demand;
-
-	bidx = busy_to_bucket(runtime);
-	pred_demand = get_pred_busy(rq, p, bidx, runtime);
-	bucket_increase(p->ravg.busy_buckets, bidx);
-
-	return pred_demand;
-}
-#define assign_ravg_pred_demand(x) (p->ravg.pred_demand = x)
-
-#else	/* CONFIG_SCHED_FREQ_INPUT */
-
-static inline void
-update_task_pred_demand(struct rq *rq, struct task_struct *p, int event)
-{
-}
-
-static inline void update_cpu_busy_time(struct task_struct *p, struct rq *rq,
-	     int event, u64 wallclock, u64 irqtime)
-{
-}
-
-static inline u32 predict_and_update_buckets(struct rq *rq,
-			struct task_struct *p, u32 runtime)
-{
-	return 0;
-}
-#define assign_ravg_pred_demand(x)
-
-#endif	/* CONFIG_SCHED_FREQ_INPUT */
-
 u32 __weak get_freq_max_load(int cpu, u32 freq)
 {
 	/* 100% by default */
@@ -2710,6 +2674,41 @@ fail:
 	spin_unlock_irqrestore(&freq_max_load_lock, flags);
 	return ret;
 }
+
+static inline u32 predict_and_update_buckets(struct rq *rq,
+			struct task_struct *p, u32 runtime) {
+
+	int bidx;
+	u32 pred_demand;
+
+	bidx = busy_to_bucket(runtime);
+	pred_demand = get_pred_busy(rq, p, bidx, runtime);
+	bucket_increase(p->ravg.busy_buckets, bidx);
+
+	return pred_demand;
+}
+#define assign_ravg_pred_demand(x) (p->ravg.pred_demand = x)
+
+#else	/* CONFIG_SCHED_FREQ_INPUT */
+
+static inline void
+update_task_pred_demand(struct rq *rq, struct task_struct *p, int event)
+{
+}
+
+static inline void update_cpu_busy_time(struct task_struct *p, struct rq *rq,
+	     int event, u64 wallclock, u64 irqtime)
+{
+}
+
+static inline u32 predict_and_update_buckets(struct rq *rq,
+			struct task_struct *p, u32 runtime)
+{
+	return 0;
+}
+#define assign_ravg_pred_demand(x)
+
+#endif	/* CONFIG_SCHED_FREQ_INPUT */
 
 static void update_task_cpu_cycles(struct task_struct *p, int cpu)
 {
@@ -3187,7 +3186,6 @@ const char *sched_window_reset_reasons[] = {
 	"HIST_SIZE_CHANGE",
 };
 
-static inline void _reset_all_group_time(u64 window_start);
 /* Called with IRQs enabled */
 void reset_all_window_stats(u64 window_start, unsigned int window_size)
 {
@@ -3196,6 +3194,7 @@ void reset_all_window_stats(u64 window_start, unsigned int window_size)
 	u64 start_ts = sched_ktime_clock();
 	int reason = WINDOW_CHANGE;
 	unsigned int old = 0, new = 0;
+	struct related_thread_group *grp;
 
 	disable_window_stats();
 
@@ -3210,7 +3209,18 @@ void reset_all_window_stats(u64 window_start, unsigned int window_size)
 		raw_spin_lock(&rq->lock);
 	}
 
-	_reset_all_group_time(window_start);
+	list_for_each_entry(grp, &related_thread_groups, list) {
+		int j;
+
+		for_each_possible_cpu(j) {
+			struct group_cpu_time *cpu_time;
+			/* Protected by rq lock */
+			cpu_time = _group_cpu_time(grp, j);
+			memset(cpu_time, 0, sizeof(struct group_cpu_time));
+			if (window_start)
+				cpu_time->window_start = window_start;
+		}
+	}
 
 	if (window_size) {
 		sched_ravg_window = window_size * TICK_NSEC;
@@ -3828,26 +3838,6 @@ _group_cpu_time(struct related_thread_group *grp, int cpu)
 	return grp ? per_cpu_ptr(grp->cpu_time, cpu) : NULL;
 }
 
-/* must be called with all rq lock held */
-static inline void _reset_all_group_time(u64 window_start)
-{
-	struct related_thread_group *grp;
-
-	list_for_each_entry(grp, &related_thread_groups, list) {
-		int j;
-
-		for_each_possible_cpu(j) {
-			struct group_cpu_time *cpu_time;
-
-			/* Protected by rq lock */
-			cpu_time = _group_cpu_time(grp, j);
-			memset(cpu_time, 0, sizeof(struct group_cpu_time));
-			if (window_start)
-				cpu_time->window_start = window_start;
-		}
-	}
-}
-
 #else	/* CONFIG_SCHED_FREQ_INPUT */
 
 static inline void free_group_cputime(struct related_thread_group *grp) { }
@@ -3862,7 +3852,7 @@ static inline void transfer_busy_time(struct rq *rq,
 {
 }
 
-static inline struct group_cpu_time *
+static struct group_cpu_time *
 task_group_cpu_time(struct task_struct *p, int cpu)
 {
 	return NULL;
@@ -3873,8 +3863,6 @@ _group_cpu_time(struct related_thread_group *grp, int cpu)
 {
 	return NULL;
 }
-
-static inline void _reset_all_group_time(u64 window_start) {}
 
 #endif
 
