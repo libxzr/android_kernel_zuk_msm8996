@@ -1305,8 +1305,6 @@ static inline int same_freq_domain(int src_cpu, int dst_cpu)
 	return cpumask_test_cpu(dst_cpu, &rq->freq_domain_cpumask);
 }
 
-extern unsigned int sched_freq_aggregate_threshold;
-
 #else	/* CONFIG_SCHED_FREQ_INPUT */
 
 #define sched_migration_fixup	0
