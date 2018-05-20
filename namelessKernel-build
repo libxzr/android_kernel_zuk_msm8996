@@ -2,7 +2,7 @@
 export ARCH=arm64
 export SUBARCH=arm64
 export CROSS_COMPILE=aarch64-linux-gnu-
-
+export PATH="$PATH:${HOME}/gcc-prebuilts/bin"
 z2_plus(){
 zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
 export KBUILD_BUILD_USER="z2_plus"
