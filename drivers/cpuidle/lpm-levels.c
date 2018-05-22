@@ -1064,9 +1064,6 @@ exit:
 
 	cluster_unprepare(cluster, cpumask, idx, true, end_time);
 	cpu_unprepare(cluster, idx, true);
-
-	sched_set_cpu_cstate(smp_processor_id(), 0, 0, 0);
-
 	trace_cpu_idle_exit(idx, success);
 	end_time = ktime_to_ns(ktime_get()) - start_time;
 	dev->last_residency = do_div(end_time, 1000);
