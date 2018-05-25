@@ -22,8 +22,14 @@ static int cpufreq_governor_performance(struct cpufreq_policy *policy,
 	switch (event) {
 	case CPUFREQ_GOV_START:
 	case CPUFREQ_GOV_LIMITS:
-		__cpufreq_driver_target(policy, 1478400,
+ 		if(policy->max >= 2150400){
+		__cpufreq_driver_target(policy, 2150400,
 						CPUFREQ_RELATION_H);
+		}
+		else{
+		__cpufreq_driver_target(policy, 1593600,
+						CPUFREQ_RELATION_H);
+		}
 		break;
 	default:
 		break;
