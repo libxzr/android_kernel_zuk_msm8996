@@ -129,40 +129,7 @@ static void __cpuinit asmp_work_fn(struct work_struct *work) {
 	queue_delayed_work(asmp_workq, &asmp_work, delay_jif);
 }
 
-static void asmp_power_suspend(struct power_suspend *h) {
-	unsigned int cpu;
 
-	/* unplug online cpu cores */
-	if (asmp_param.scroff_single_core)
-		for_each_present_cpu(cpu)
-			if (cpu && cpu_online(cpu))
-				cpu_down(cpu);
-
-	/* suspend main work thread */
-	if (enabled)
-		cancel_delayed_work_sync(&asmp_work);
-
-	pr_info(ASMP_TAG"suspended\n");
-}
-
-static void __cpuinit asmp_late_resume(struct power_suspend *h) {
-	unsigned int cpu;
-
-	/* hotplug offline cpu cores */
-	if (asmp_param.scroff_single_core)
-		for_each_present_cpu(cpu) {
-			if (num_online_cpus() >= asmp_param.max_cpus)
-				break;
-			if (!cpu_online(cpu))
-				cpu_up(cpu);
-		}
-	/* resume main work thread */
-	if (enabled)
-		queue_delayed_work(asmp_workq, &asmp_work,
-				msecs_to_jiffies(asmp_param.delay));
-
-	pr_info(ASMP_TAG"resumed\n");
-}
 
 static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp) {
 	int ret;
