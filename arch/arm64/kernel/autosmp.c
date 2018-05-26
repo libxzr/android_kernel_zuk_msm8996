@@ -164,12 +164,6 @@ static void __cpuinit asmp_late_resume(struct power_suspend *h) {
 	pr_info(ASMP_TAG"resumed\n");
 }
 
-static struct power_suspend __refdata asmp_power_suspend_handler = {
-	.level = POWER_SUSPEND_LEVEL_BLANK_SCREEN,
-	.suspend = asmp_power_suspend,
-	.resume = asmp_late_resume,
-};
-
 static int __cpuinit set_enabled(const char *val, const struct kernel_param *kp) {
 	int ret;
 	unsigned int cpu;
