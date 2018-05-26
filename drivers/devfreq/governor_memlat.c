@@ -86,6 +86,7 @@ static DEVICE_ATTR(__attr, 0644, show_##__attr, store_##__attr)
 static unsigned long compute_dev_vote(struct devfreq *df)
 {
 	int i, lat_dev;
+	lat_dev=-1;
 	struct memlat_node *node = df->data;
 	struct memlat_hwmon *hw = node->hw;
 	unsigned long max_freq = 0;
@@ -113,7 +114,7 @@ static unsigned long compute_dev_vote(struct devfreq *df)
 		}
 	}
 
-	if (max_freq)
+	if (max_freq&&(lat_dev!=-1))
 		trace_memlat_dev_update(dev_name(df->dev.parent),
 					hw->core_stats[lat_dev].id,
 					hw->core_stats[lat_dev].inst_count,
