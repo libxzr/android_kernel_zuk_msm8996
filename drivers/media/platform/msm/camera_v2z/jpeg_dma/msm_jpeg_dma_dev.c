@@ -812,10 +812,10 @@ static int msm_jpegdma_s_fmt_vid_out(struct file *file,
 static int msm_jpegdma_reqbufs(struct file *file,
 	void *fh, struct v4l2_requestbuffers *req)
 {
-	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
 	int ret = 0;
+	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
 	mutex_lock(&ctx->lock);
-	return v4l2_m2m_reqbufs(file, ctx->m2m_ctx, req);
+	ret = v4l2_m2m_reqbufs(file, ctx->m2m_ctx, req);
 	mutex_unlock(&ctx->lock);
 	return ret;
 }
