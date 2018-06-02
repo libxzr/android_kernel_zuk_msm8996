@@ -1312,7 +1312,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	 * ttwu() will sort out the placement.
 	 */
 	WARN_ON_ONCE(p->state != TASK_RUNNING && p->state != TASK_WAKING &&
-			!p->on_rq);
+			!(task_preempt_count(p) & PREEMPT_ACTIVE));
 
 #ifdef CONFIG_LOCKDEP
 	/*
