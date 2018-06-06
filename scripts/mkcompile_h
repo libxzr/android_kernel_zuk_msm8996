@@ -71,7 +71,11 @@ UTS_TRUNCATE="cut -b -$UTS_LEN"
 
   echo \#define UTS_MACHINE \"$ARCH\"
 
-  echo \#define UTS_VERSION \"`echo $UTS_VERSION | $UTS_TRUNCATE`\"
+  if [ -z "$KBUILD_DATE" ]; then
+    echo \#define UTS_VERSION \"`echo $UTS_VERSION | $UTS_TRUNCATE`\"
+  else
+    echo \#define UTS_VERSION \"$KBUILD_DATE\"
+  fi;
 
   echo \#define LINUX_COMPILE_BY \"`echo $LINUX_COMPILE_BY | $UTS_TRUNCATE`\"
   echo \#define LINUX_COMPILE_HOST \"`echo $LINUX_COMPILE_HOST | $UTS_TRUNCATE`\"
