@@ -10,7 +10,7 @@ z2_plus(){
 zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j16
+make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j8
 
 cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 cd ~/AnyKernel2
@@ -26,7 +26,7 @@ z2_row(){
 zipname="(z2_pro)Nameless Kernel[Treble] Rx.zip"
 export KBUILD_BUILD_USER="z2_row"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j16
+make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j8
 
 cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 cd ~/AnyKernel2
