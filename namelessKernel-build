@@ -7,7 +7,7 @@ export CC="$CLANG_PATH/bin/clang"
 export CLANG_TRIPLE="aarch64-linux-gnu-"
 export KBUILD_COMPILER_STRING=$($CLANG_PATH/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 z2_plus(){
-zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
+zipname="(z2_plus)Nameless Kernel[EAS] Rx.zip"
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
 make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j8
@@ -23,7 +23,7 @@ rm -f "$zipname"
 
 
 z2_row(){
-zipname="(z2_pro)Nameless Kernel[Treble] Rx.zip"
+zipname="(z2_pro)Nameless Kernel[EAS] Rx.zip"
 export KBUILD_BUILD_USER="z2_row"
 export KBUILD_BUILD_HOST="LibXZR"
 make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j8
