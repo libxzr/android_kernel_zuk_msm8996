@@ -1,4 +1,4 @@
-CONFIG_LOCALVERSION="-NamelessKernel[Treble]"
+CONFIG_LOCALVERSION="-NamelessKernel[EAS]"
 
 #EAS
 CONFIG_SCHED_WALT=y
