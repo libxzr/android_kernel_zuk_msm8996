@@ -109,7 +109,6 @@ Output:
 *********************************************************/
 s32 gtp_i2c_read(struct i2c_client *client, u8 *buf, s32 len)
 {
-	struct goodix_ts_data *ts = i2c_get_clientdata(client);
 	int ret = -EIO;
 	u8 retries;
 	struct i2c_msg msgs[2] = {
@@ -152,9 +151,7 @@ Output:
 *********************************************************/
 s32 gtp_i2c_write(struct i2c_client *client,u8 *buf,s32 len)
 {
-	struct goodix_ts_data *ts = i2c_get_clientdata(client);
 	int ret = -EIO;
-	u8 retries;
 	struct i2c_msg msg = {
 		.flags = !I2C_M_RD,
 		.addr = client->addr,
@@ -1982,7 +1979,7 @@ Output:
 *******************************************************/
 static void goodix_ts_suspend(struct goodix_ts_data *ts)
 {
-	int ret = -1, i;    
+	int ret = -1;
 
 	GTP_DEBUG_FUNC();
 	if(ts->gtp_is_suspend)
