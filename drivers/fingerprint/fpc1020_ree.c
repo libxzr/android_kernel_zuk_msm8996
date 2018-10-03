@@ -358,7 +358,7 @@ static int fpc1020_initial_irq(struct fpc1020_data *fpc1020)
 		return -EINVAL;
 	}
 
-	irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
+	irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_PERF_CRITICAL;
 
 	if (of_property_read_bool(fpc1020->dev->of_node, "fpc,enable-wakeup")) {
 		irqf |= IRQF_NO_SUSPEND;
@@ -369,6 +369,7 @@ static int fpc1020_initial_irq(struct fpc1020_data *fpc1020)
 	retval = devm_request_threaded_irq(fpc1020->dev, fpc1020->irq,
 		NULL, fpc1020_irq_handler, irqf,
 		dev_name(fpc1020->dev), fpc1020);
+
 	if (retval) {
 		pr_err("request irq %i failed.\n", fpc1020->irq);
 		fpc1020->irq = -EINVAL;
