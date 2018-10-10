@@ -604,9 +604,13 @@ static int sugov_init(struct cpufreq_policy *policy)
 	if (policy->governor_data)
 		return -EBUSY;
 
+	cpufreq_enable_fast_switch(policy);
+
 	sg_policy = sugov_policy_alloc(policy);
-	if (!sg_policy)
+	if (!sg_policy) {
 		return -ENOMEM;
+		goto disable_fast_switch;
+	}
 
 	ret = sugov_kthread_create(sg_policy);
 	if (ret)
@@ -645,14 +649,12 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 	ret = kobject_init_and_add(&tunables->attr_set.kobj, &sugov_tunables_ktype,
 				   get_governor_parent_kobj(policy), "%s",
-				   cpufreq_gov_schedutil.name);
+				   blu_schedutil_gov.name);
 	if (ret)
 		goto fail;
 
  out:
 	mutex_unlock(&global_tunables_lock);
-
-	cpufreq_enable_fast_switch(policy);
 	return 0;
 
  fail:
@@ -666,6 +668,10 @@ free_sg_policy:
 	mutex_unlock(&global_tunables_lock);
 
 	sugov_policy_free(sg_policy);
+
+disable_fast_switch:
+	cpufreq_disable_fast_switch(policy);
+
 	pr_err("initialization failed (error %d)\n", ret);
 	return ret;
 }
@@ -689,6 +695,8 @@ static int sugov_exit(struct cpufreq_policy *policy)
 
 	sugov_kthread_stop(sg_policy);
 	sugov_policy_free(sg_policy);
+
+	cpufreq_disable_fast_switch(policy);
 
 	return 0;
 }
