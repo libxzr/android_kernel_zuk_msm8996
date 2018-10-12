@@ -210,8 +210,6 @@ static void sugov_get_util(unsigned long *util, unsigned long *max, u64 time)
 	unsigned long max_cap, rt;
 	s64 delta;
 
-	struct sugov_cpu *loadcpu = &per_cpu(sugov_cpu, cpu);
-
 	max_cap = arch_scale_cpu_capacity(NULL, cpu);
 
 	sched_avg_update(rq);
