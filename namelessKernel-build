@@ -7,27 +7,21 @@ export CC="$CLANG_PATH/bin/clang"
 export CLANG_TRIPLE="aarch64-linux-gnu-"
 export KBUILD_COMPILER_STRING=$($CLANG_PATH/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 z2_plus(){
-zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
 make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j8
-
-cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
-cd ~/AnyKernel2
-git checkout z2_plus_treble
-zip -r "$zipname" *
-cp -f "$zipname" ~
-rm -f "$zipname"
-
+makezip
 }
 
 
 z2_row(){
-zipname="(z2_pro)Nameless Kernel[Treble] Rx.zip"
 export KBUILD_BUILD_USER="z2_row"
 export KBUILD_BUILD_HOST="LibXZR"
 make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j8
+makezip
+}
 
+makezip(){
 cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 cd ~/AnyKernel2
 git checkout z2_plus_treble
@@ -38,10 +32,22 @@ rm -f "$zipname"
 
 if [ "$1" == z2_plus ]
 then
+zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
+if [ "$2" == "mkzip" ]
+then
+makezip
+else
 z2_plus
+fi
 fi
 
 if [ "$1" == z2_row ]
 then
+zipname="(z2_pro)Nameless Kernel[Treble] Rx.zip"
+if [ "$2" == "mkzip" ]
+then
+makezip
+else
 z2_row
+fi
 fi
