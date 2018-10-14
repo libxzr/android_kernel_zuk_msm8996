@@ -52,7 +52,7 @@ struct fpc1020_data {
 	struct work_struct input_report_work;
 	struct workqueue_struct *fpc1020_wq;
 	u8  report_key;
-	int __read_mostly screen_on;
+	int screen_on;
 	int proximity_state; /* 0:far 1:near */
 };
 
