@@ -2290,23 +2290,18 @@ static int set_soc_remap_point(struct fg_chip *chip, int soc)
 static int soc_remap_process(struct fg_chip *chip, int soc)
 {
 	int maped_soc = 0;
-	switch(soc){
+	switch (soc) {
 	case LENUK_OP_FIR_SOC :
-		maped_soc = set_soc_remap_point(chip,soc);
+		maped_soc = set_soc_remap_point(chip, soc);
 		break;
 	case LENUK_OP_SEC_SOC :
-		maped_soc = set_soc_remap_point(chip,soc) + 1;
-                break;
+		maped_soc = set_soc_remap_point(chip, soc) + 1;
+		break;
 	default:
-		chip->is_op_soc = 0;
-		if(soc >= 61 && soc <= 84 )
-			maped_soc = soc + 1;
-		else if(soc >= 86 && soc <= 100)
-			maped_soc = bound_soc(soc + 2);
-		else
-			maped_soc = soc;
+		maped_soc = bound_soc(soc + 2);
+		break;
 	}
-	pr_info("pre_map_soc is %d,post_map_soc is %d\n",soc,maped_soc);
+	pr_debug("pre_map_soc is %d,post_map_soc is %d\n",soc,maped_soc);
 	return maped_soc;
 }
 static int soc_show_op(struct fg_chip *chip, int msoc)
@@ -2730,6 +2725,20 @@ out:
 	return rc;
 }
 
+// Read the beat count and write it into the beat_count arg;
+// return non-zero on failure.
+static int read_beat(struct fg_chip *chip, u8 *beat_count)
+{
+	int rc = fg_read(chip, beat_count,
+			 chip->mem_base + MEM_INTF_FG_BEAT_COUNT, 1);
+	if (rc)
+		pr_err("failed to read beat count rc=%d\n", rc);
+	else if (fg_debug_mask & FG_STATUS)
+		pr_info("current: %d, prev: %d\n", *beat_count,
+			chip->last_beat_count);
+	return rc;
+}
+
 #define SANITY_CHECK_PERIOD_MS	5000
 static void check_sanity_work(struct work_struct *work)
 {
@@ -2740,19 +2749,24 @@ static void check_sanity_work(struct work_struct *work)
 	u8 beat_count;
 	bool tried_once = false;
 
+	// Try one beat check once up-front to avoid the common
+	// case where the beat has changed and we don't need to hold
+	// the chip awake.
+	rc = read_beat(chip, &beat_count);
+	if (rc == 0 && chip->last_beat_count != beat_count) {
+		chip->last_beat_count = beat_count;
+		schedule_delayed_work(
+			&chip->check_sanity_work,
+			msecs_to_jiffies(SANITY_CHECK_PERIOD_MS));
+		return;
+	}
+
 	fg_stay_awake(&chip->sanity_wakeup_source);
 
 try_again:
-	rc = fg_read(chip, &beat_count,
-			chip->mem_base + MEM_INTF_FG_BEAT_COUNT, 1);
-	if (rc) {
-		pr_err("failed to read beat count rc=%d\n", rc);
+	rc = read_beat(chip, &beat_count);
+	if (rc)
 		goto resched;
-	}
-
-	if (fg_debug_mask & FG_STATUS)
-		pr_info("current: %d, prev: %d\n", beat_count,
-			chip->last_beat_count);
 
 	if (chip->last_beat_count == beat_count) {
 		if (!tried_once) {
@@ -8353,6 +8367,7 @@ static int fg_hw_init(struct fg_chip *chip)
 		chip->wa_flag |= PULSE_REQUEST_WA;
 		break;
 	case PMI8996:
+		fg_reset_on_lockup = 1;
 		rc = fg_8996_hw_init(chip);
 		/* Setup workaround flag based on PMIC type */
 		if (fg_sense_type == INTERNAL_CURRENT_SENSE)
