@@ -83,6 +83,13 @@ config BFQ_GROUP_IOSCHED
 
 	Enable hierarchical scheduling in BFQ, using the blkio
 	(cgroups-v1) or io (cgroups-v2) controller.
+config IOSCHED_FIOPS
+	tristate "IOPS based I/O scheduler"
+	default y
+	---help---
+	  This is an IOPS based I/O scheduler. It will try to distribute
+          IOPS equally among all processes in the system. It's mainly for
+          Flash based storage.
 
 choice
 	prompt "Default I/O scheduler"
@@ -114,6 +121,9 @@ choice
 	config DEFAULT_NOOP
 		bool "No-op"
 
+	config DEFAULT_FIOPS
+		bool "FIOPS" if IOSCHED_FIOPS=y
+
 endchoice
 
 config DEFAULT_IOSCHED
@@ -127,6 +137,7 @@ config DEFAULT_IOSCHED
 
 	default "maple" if DEFAULT_MAPLE
 
+	default "fiops" if DEFAULT_FIOPS
 
 endmenu
 
