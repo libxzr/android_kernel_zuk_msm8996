@@ -2895,7 +2895,7 @@ enum qca_wlan_vendor_peer_cfr_capture_attr {
 	QCA_WLAN_VENDOR_ATTR_PEER_CFR_AFTER_LAST - 1,
 };
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,0))
 /**
  * enum ieee80211_band - supported frequency bands
  *
