@@ -24,7 +24,7 @@
 
 /* Bluetooth kernel library. */
 
-#define pr_fmt(fmt) "Bluetooth: " fmt
+#define pr_fmt(fmt) "\nBluetooth: " fmt
 
 #include <linux/export.h>
 
