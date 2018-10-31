@@ -206,7 +206,7 @@ maple_dispatch_requests(struct request_queue *q, int force)
 	struct maple_data *mdata = maple_get_data(q);
 	struct request *rq = NULL;
 	int data_dir = READ;
-	const bool display_on = is_display_on();
+	const bool display_on = !state_suspended;
 
 	/*
 	 * Retrieve any expired request after a batch of
