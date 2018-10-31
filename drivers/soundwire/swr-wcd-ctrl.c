@@ -1310,6 +1310,11 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 			} else {
 				dev_err(swrm->dev, "%s: device is not ready\n",
 					 __func__);
+#ifdef CONFIG_MACH_ZUK_MSM8996
+				dev_err(swrm->dev, "%s: not a big deal\n",
+					 __func__);
+				ret = 0;
+#endif
 			}
 			goto found;
 		}
