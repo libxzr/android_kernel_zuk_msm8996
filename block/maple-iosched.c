@@ -17,7 +17,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
-#include <linux/display_state.h>
+#include <linux/state_notifier.h> 
 
 #define MAPLE_IOSCHED_PATCHLEVEL	(8)
 
@@ -78,7 +78,7 @@ maple_add_request(struct request_queue *q, struct request *rq)
 	struct maple_data *mdata = maple_get_data(q);
 	const int sync = rq_is_sync(rq);
 	const int dir = rq_data_dir(rq);
-	const bool display_on = is_display_on();
+	const bool display_on = !state_suspended;
 
 	/*
 	 * Add request to the proper fifo list and set its
