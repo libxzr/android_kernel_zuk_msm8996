@@ -339,7 +339,7 @@ module_param_named(
 	battery_type, fg_batt_type, charp, 00600
 );
 
-static int fg_sram_update_period_ms = 30000;
+static int fg_sram_update_period_ms = 5000;
 module_param_named(
 	sram_update_period_ms, fg_sram_update_period_ms, int, 00600
 );
