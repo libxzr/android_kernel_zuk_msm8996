@@ -10,7 +10,7 @@ export CROSS_COMPILE="${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-androi
 z2_plus(){
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out mrproper&&make O=out z2_plus_defconfig&&make O=out -j8
+make O=out z2_plus_defconfig&&make O=out -j8
 makezip
 }
 
@@ -18,7 +18,7 @@ makezip
 z2_row(){
 export KBUILD_BUILD_USER="z2_row"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out mrproper&&make O=out z2_row_defconfig&&make O=out -j8
+make O=out z2_row_defconfig&&make O=out -j8
 makezip
 }
 
@@ -31,6 +31,11 @@ cp -f "$zipname" ~
 rm -f "$zipname"
 }
 
+clean(){
+make mrproper
+make O=out mrproper
+}
+
 if [ "$1" == z2_plus ]
 then
 zipname="(z2_plus)Nameless Kernel[4.4] Rx.zip"
@@ -38,17 +43,30 @@ if [ "$2" == "mkzip" ]
 then
 makezip
 else
+if [ "$2" == "dirty" ]
+then
 z2_plus
+else
+clean
+z2_plus
+fi
 fi
 fi
 
 if [ "$1" == z2_row ]
 then
-zipname="(z2_pro)Nameless Kernel[4.4] Rx.zip"
+zipname="(z2_row)Nameless Kernel[4.4] Rx.zip"
 if [ "$2" == "mkzip" ]
 then
 makezip
 else
+if [ "$2" == "dirty" ]
+then
+z2_row
+else
+clean
 z2_row
 fi
 fi
+fi
+
