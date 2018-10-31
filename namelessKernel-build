@@ -3,9 +3,9 @@ export ARCH=arm64
 export SUBARCH=arm64
 export CLANG_PATH="${HOME}/linux-x86/clang-r339409"
 export CROSS_COMPILE="${HOME}/gcc-prebuilts/bin/aarch64-linux-gnu-"
-export CC="$CLANG_PATH/bin/clang"
-export CLANG_TRIPLE="aarch64-linux-gnu-"
-export KBUILD_COMPILER_STRING=$($CLANG_PATH/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+#export CC="$CLANG_PATH/bin/clang"
+#export CLANG_TRIPLE="aarch64-linux-gnu-"
+#export KBUILD_COMPILER_STRING=$($CLANG_PATH/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 z2_plus(){
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
