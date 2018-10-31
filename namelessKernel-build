@@ -33,7 +33,7 @@ rm -f "$zipname"
 
 if [ "$1" == z2_plus ]
 then
-zipname="(z2_plus)Nameless Kernel[Treble] Rx.zip"
+zipname="(z2_plus)Nameless Kernel[4.4] Rx.zip"
 if [ "$2" == "mkzip" ]
 then
 makezip
@@ -44,7 +44,7 @@ fi
 
 if [ "$1" == z2_row ]
 then
-zipname="(z2_pro)Nameless Kernel[Treble] Rx.zip"
+zipname="(z2_pro)Nameless Kernel[4.4] Rx.zip"
 if [ "$2" == "mkzip" ]
 then
 makezip
