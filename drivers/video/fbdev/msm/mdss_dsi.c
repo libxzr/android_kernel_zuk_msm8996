@@ -37,6 +37,10 @@
 #include "mdss_dba_utils.h"
 #include "mdss_livedisplay.h"
 
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+#endif
+
 #define CMDLINE_DSI_CTL_NUM_STRING_LEN 2
 
 /* Master structure to hold all the information about the DSI/panel */
@@ -2934,6 +2938,9 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
 		lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
+		#ifdef CONFIG_STATE_NOTIFIER
+		state_resume();
+		#endif
 		break;
 	case MDSS_EVENT_BLANK:
 		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL);
@@ -2948,6 +2955,9 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_blank(pdata, power_state);
 		rc = mdss_dsi_off(pdata, power_state);
 		lcd_notifier_call_chain(LCD_EVENT_OFF_END, NULL);
+		#ifdef CONFIG_STATE_NOTIFIER
+		state_suspend();
+		#endif
 		break;
 	case MDSS_EVENT_DISABLE_PANEL:
 		/* disable esd thread */
