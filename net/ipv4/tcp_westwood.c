@@ -43,8 +43,12 @@ struct westwood {
 };
 
 /* TCP Westwood functions and constants */
-#define TCP_WESTWOOD_RTT_MIN   (HZ/20)	/* 50ms */
-#define TCP_WESTWOOD_INIT_RTT  (20*HZ)	/* maybe too conservative?! */
+
+int TCP_WESTWOOD_RTT_MIN= HZ/18;	/* 55.55ms */
+int TCP_WESTWOOD_INIT_RTT= 18*HZ;	/* maybe too conservative?! */
+
+module_param_named(rtt_min, TCP_WESTWOOD_RTT_MIN, int, 0644);
+module_param_named(init_rtt, TCP_WESTWOOD_INIT_RTT, int, 0644);
 
 /*
  * @tcp_westwood_create
