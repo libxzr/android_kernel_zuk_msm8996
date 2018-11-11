@@ -2250,7 +2250,7 @@ static int get_prop_capacity(struct fg_chip *chip)
 	bool vbatt_low_sts;
 
 	if (chip->use_last_soc && chip->last_soc) {
-		if (chip->last_soc == FULL_SOC_RAW)
+		if (chip->last_soc >= FULL_SOC_RAW)
 			return FULL_CAPACITY;
 		return DIV_ROUND_CLOSEST((chip->last_soc - 1) *
 				(FULL_CAPACITY - 2),
@@ -2288,7 +2288,7 @@ static int get_prop_capacity(struct fg_chip *chip)
 		} else {
 			return EMPTY_CAPACITY;
 		}
-	} else if (msoc == FULL_SOC_RAW) {
+	} else if (msoc >= FULL_SOC_RAW) {
 		return FULL_CAPACITY;
 	}
 
