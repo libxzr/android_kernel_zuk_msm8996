@@ -412,4 +412,11 @@ config QORIQ_CPUFREQ
 	  which are capable of changing the CPU's frequency dynamically.
 
 endif
+
+config BOOST_CONTROL
+	bool "boost control"
+	default n
+	help
+	  A simple driver to control sultan's boost in userspace.
+	
 endmenu
