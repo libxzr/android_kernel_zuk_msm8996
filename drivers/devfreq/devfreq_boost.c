@@ -16,6 +16,7 @@
 #include <linux/devfreq_boost.h>
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <linux/boost_control.h>
 
 struct df_boost_drv {
 	struct boost_dev devices[DEVFREQ_MAX];
@@ -268,7 +269,11 @@ static int fb_notifier_cb(struct notifier_block *nb,
 
 		for (i = 0; i < DEVFREQ_MAX; i++)
 			__devfreq_boost_kick_max(d->devices + i,
+		#if CONFIG_BOOST_CONTROL
+				cpubw_wake_boost_duration);
+		#else
 				CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS);
+		#endif
 	} else {
 		devfreq_unboost_all(d);
 	}
@@ -387,7 +392,11 @@ static int __init devfreq_boost_init(void)
 	}
 
 	d->devices[DEVFREQ_MSM_CPUBW].boost_freq =
+		#if CONFIG_BOOST_CONTROL
+		cpubw_boost_freq;
+		#else
 		CONFIG_DEVFREQ_MSM_CPUBW_BOOST_FREQ;
+		#endif
 
 	devfreq_boost_input_handler.private = d;
 	ret = input_register_handler(&devfreq_boost_input_handler);

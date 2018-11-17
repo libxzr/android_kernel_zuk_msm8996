@@ -22,6 +22,9 @@ obj-$(CONFIG_CPU_INPUT_BOOST)		+= cpu_input_boost.o
 
 obj-$(CONFIG_CPUFREQ_DT)		+= cpufreq-dt.o
 
+# Boost control
+obj-$(CONFIG_BOOST_CONTROL)		+= boost_control.o
+
 ##################################################################################
 # x86 drivers.
 # Link order matters. K8 is preferred to ACPI because of firmware bugs in early

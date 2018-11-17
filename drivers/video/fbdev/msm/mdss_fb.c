@@ -48,6 +48,7 @@
 #include <linux/dma-buf.h>
 #include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
+#include <linux/boost_control.h>
 #include <sync.h>
 #include <sw_sync.h>
 
@@ -5060,8 +5061,15 @@ int mdss_fb_do_ioctl(struct fb_info *info, unsigned int cmd,
 		ret = mdss_fb_mode_switch(mfd, dsi_mode);
 		break;
 	case MSMFB_ATOMIC_COMMIT:
+		#if CONFIG_BOOST_CONTROL
+		if(enable_fb_boost){
 		cpu_input_boost_kick();
 		devfreq_boost_kick(DEVFREQ_MSM_CPUBW);
+		}
+		#else
+		cpu_input_boost_kick();
+		devfreq_boost_kick(DEVFREQ_MSM_CPUBW);
+		#endif
 		ret = mdss_fb_atomic_commit_ioctl(info, argp, file);
 		break;
 
