@@ -18,6 +18,7 @@
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/slab.h>
+#include <linux/boost_control.h>
 
 /* Available bits for boost_drv state */
 #define SCREEN_AWAKE		(1U << 0)
@@ -43,10 +44,20 @@ static struct boost_drv *boost_drv_g;
 
 static u32 get_boost_freq(struct boost_drv *b, u32 cpu)
 {
+	#if CONFIG_BOOST_CONTROL
+	if (!enable_cpu_boost)
+	return 0;
+
+	if (cpumask_test_cpu(cpu, cpu_lp_mask))
+		return input_boost_freq_lp;
+
+	return input_boost_freq_perf;
+	#else
 	if (cpumask_test_cpu(cpu, cpu_lp_mask))
 		return CONFIG_INPUT_BOOST_FREQ_LP;
 
 	return CONFIG_INPUT_BOOST_FREQ_PERF;
+	#endif
 }
 
 static u32 get_boost_state(struct boost_drv *b)
@@ -224,7 +235,11 @@ static int fb_notifier_cb(struct notifier_block *nb,
 	/* Boost when the screen turns on and unboost when it turns off */
 	if (*blank == FB_BLANK_UNBLANK) {
 		set_boost_bit(b, SCREEN_AWAKE);
+	#if CONFIG_BOOST_CONTROL
+		__cpu_input_boost_kick_max(b, wake_boost_duration);
+	#else
 		__cpu_input_boost_kick_max(b, CONFIG_WAKE_BOOST_DURATION_MS);
+	#endif
 	} else {
 		clear_boost_bit(b, SCREEN_AWAKE);
 		unboost_all_cpus(b);
