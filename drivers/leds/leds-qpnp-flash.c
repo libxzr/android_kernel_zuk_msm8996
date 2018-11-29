@@ -10,6 +10,9 @@
  * GNU General Public License for more details.
  */
 
+#if defined(CONFIG_ANDROID) && !defined(CONFIG_DEBUG_FS)
+#define CONFIG_DEBUG_FS
+#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
