@@ -13,7 +13,7 @@
 
 #include <linux/moduleparam.h>
 
-bool enable_fb_boost=true;
+bool enable_fb_boost=false;
 module_param_named(enable_fb_boost, enable_fb_boost, bool, 0644);
 
 bool enable_cpu_boost=true;
