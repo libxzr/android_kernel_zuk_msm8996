@@ -39,31 +39,40 @@ make O=out mrproper
 if [ "$1" == z2_plus ]
 then
 zipname="(z2_plus)Nameless Kernel[4.4] Rx.zip"
+ziped=0
 if [ "$2" == "mkzip" ]
 then
 makezip
-else
+ziped=1
+fi
 if [ "$2" == "dirty" ]
 then
 z2_plus
 else
+if [ $ziped == 0 ]
+then
 clean
 z2_plus
 fi
 fi
+
 fi
 
 if [ "$1" == z2_row ]
 then
 zipname="(z2_row)Nameless Kernel[4.4] Rx.zip"
+ziped=0
 if [ "$2" == "mkzip" ]
 then
 makezip
-else
+ziped=1
+fi
 if [ "$2" == "dirty" ]
 then
 z2_row
 else
+if [ $ziped == 0 ]
+then
 clean
 z2_row
 fi
