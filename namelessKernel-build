@@ -45,6 +45,28 @@ then
 makezip
 ziped=1
 fi
+
+if [ "$2" == "menu" ]
+then
+make O=out z2_plus_defconfig
+make O=out menuconfig
+ziped=1
+fi
+
+if [ "$2" == "save" ]
+then
+make O=out savedefconfig
+ziped=1
+fi
+
+if [ "$2" == "regen" ]
+then
+make O=out z2_plus_defconfig
+make O=out savedefconfig
+mv out/defconfig arch/arm64/configs/z2_plus_defconfig
+ziped=1
+fi
+
 if [ "$2" == "dirty" ]
 then
 z2_plus
@@ -67,6 +89,28 @@ then
 makezip
 ziped=1
 fi
+
+if [ "$2" == "menu" ]
+then
+make O=out z2_row_defconfig
+make O=out menuconfig
+ziped=1
+fi
+
+if [ "$2" == "save" ]
+then
+make O=out savedefconfig
+ziped=1
+fi
+
+if [ "$2" == "regen" ]
+then
+make O=out z2_row_defconfig
+make O=out savedefconfig
+mv out/defconfig arch/arm64/configs/z2_row_defconfig
+ziped=1
+fi
+
 if [ "$2" == "dirty" ]
 then
 z2_row
