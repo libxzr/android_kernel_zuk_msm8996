@@ -20,6 +20,8 @@
 #include <linux/slab.h>
 #include <linux/boost_control.h>
 
+unsigned long last_input_time;
+
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static unsigned short dynamic_stune_boost;
 module_param(dynamic_stune_boost, short, 0644);
@@ -263,6 +265,8 @@ static void cpu_input_boost_input_event(struct input_handle *handle,
 		return;
 
 	queue_work(b->wq, &b->input_boost);
+
+	last_input_time = jiffies;
 }
 
 static int cpu_input_boost_input_connect(struct input_handler *handler,
