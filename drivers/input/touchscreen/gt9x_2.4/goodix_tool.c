@@ -260,13 +260,16 @@ s32 init_wr_node(struct i2c_client *client)
 		GTP_INFO("Create proc entry success!");
 	}
 
+	kfree(cmd_head.data);
 	return SUCCESS;
 }
 
 void uninit_wr_node(void)
 {
-	kfree(cmd_head.data);
-	cmd_head.data = NULL;
+	if (cmd_head.data) {
+		kfree(cmd_head.data);
+		cmd_head.data = NULL;
+	}
 	unregister_i2c_func();
 	remove_proc_entry(procname, NULL);
 }
