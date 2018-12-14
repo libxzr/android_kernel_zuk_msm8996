@@ -98,14 +98,17 @@ int gt1x_init_tool_node(void)
 	} else {
 		GTP_INFO("Created proc entry /proc/%s.", procname);
 	}
+	kfree(cmd_head.data);
 	return 0;
 }
 
 void gt1x_deinit_tool_node(void)
 {
 	remove_proc_entry(procname, NULL);
-	kfree(cmd_head.data);
-	cmd_head.data = NULL;
+	if (cmd_head.data) {
+		kfree(cmd_head.data);
+		cmd_head.data = NULL;
+	}
 }
 
 static s32 tool_i2c_read(u8 * buf, u16 len)
