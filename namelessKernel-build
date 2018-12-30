@@ -25,7 +25,7 @@ makezip
 makezip(){
 cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 cd ~/AnyKernel2
-git checkout 4.4-eas
+git checkout z2/eas
 zip -r "$zipname" *
 cp -f "$zipname" ~
 rm -f "$zipname"
