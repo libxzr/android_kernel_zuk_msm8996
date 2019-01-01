@@ -1,16 +1,17 @@
 #!/bin/bash
-export ARCH=arm64
-export SUBARCH=arm64
-export CLANG_PATH="${HOME}/linux-x86/clang-r346389b"
-export CROSS_COMPILE="${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-#export CROSS_COMPILE="${HOME}/gcc-arm-8.2-2018.11-x86_64-aarch64-linux-gnu/bin/aarch64-linux-gnu-"
-export CC="$CLANG_PATH/bin/clang"
-export CLANG_TRIPLE="aarch64-linux-gnu-"
-export KBUILD_COMPILER_STRING=$($CLANG_PATH/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+CLANG_PATH="${HOME}/linux-x86/clang-r346389b/bin/clang"
+export KBUILD_COMPILER_STRING=$($CLANG_PATH --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+
+args="-j$(nproc --all) O=out \
+                      ARCH=arm64 \
+                      CC=$CLANG_PATH \
+                      CLANG_TRIPLE=aarch64-linux-gnu- \
+                      CROSS_COMPILE=${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-android-";
+
 z2_plus(){
 export KBUILD_BUILD_USER="z2_plus"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out z2_plus_defconfig&&make O=out -j8
+make $args z2_plus_defconfig&&make $args
 makezip
 }
 
@@ -18,7 +19,7 @@ makezip
 z2_row(){
 export KBUILD_BUILD_USER="z2_row"
 export KBUILD_BUILD_HOST="LibXZR"
-make O=out z2_row_defconfig&&make O=out -j8
+make $args z2_row_defconfig&&make $args
 makezip
 }
 
@@ -33,7 +34,7 @@ rm -f "$zipname"
 
 clean(){
 make mrproper
-make O=out mrproper
+make $args mrproper
 }
 
 if [ "$1" == z2_plus ]
@@ -48,21 +49,21 @@ fi
 
 if [ "$2" == "menu" ]
 then
-make O=out z2_plus_defconfig
-make O=out menuconfig
+make $args z2_plus_defconfig
+make $args menuconfig
 ziped=1
 fi
 
 if [ "$2" == "save" ]
 then
-make O=out savedefconfig
+make $args savedefconfig
 ziped=1
 fi
 
 if [ "$2" == "regen" ]
 then
-make O=out z2_plus_defconfig
-make O=out savedefconfig
+make $args z2_plus_defconfig
+make $args savedefconfig
 mv out/defconfig arch/arm64/configs/z2_plus_defconfig
 ziped=1
 fi
@@ -92,21 +93,21 @@ fi
 
 if [ "$2" == "menu" ]
 then
-make O=out z2_row_defconfig
-make O=out menuconfig
+make $args z2_row_defconfig
+make $args menuconfig
 ziped=1
 fi
 
 if [ "$2" == "save" ]
 then
-make O=out savedefconfig
+make $args savedefconfig
 ziped=1
 fi
 
 if [ "$2" == "regen" ]
 then
-make O=out z2_row_defconfig
-make O=out savedefconfig
+make $args z2_row_defconfig
+make $args savedefconfig
 mv out/defconfig arch/arm64/configs/z2_row_defconfig
 ziped=1
 fi
