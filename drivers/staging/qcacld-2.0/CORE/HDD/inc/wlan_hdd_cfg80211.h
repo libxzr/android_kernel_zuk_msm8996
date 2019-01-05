@@ -2824,7 +2824,7 @@ enum qca_wlan_vendor_attr_thermal_cmd {
 
 #endif /* FEATURE_WLAN_THERMAL_SHUTDOWN */
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,4,0))
 /**
  * enum ieee80211_band - supported frequency bands
  *
