@@ -351,7 +351,7 @@ CONFIG_FEATURE_STATS_EXT := 1
 CONFIG_STATICALLY_ADD_11P_CHANNELS := n
 
 #Enable thermal shutdown
-CONFIG_WLAN_THERMAL_SHUTDOWN := 1
+CONFIG_WLAN_THERMAL_SHUTDOWN := 0
 
 #Enable the Disable Channel Switch
 CONFIG_WLAN_DISABLE_CHANNEL_SWITCH := 1
@@ -1045,7 +1045,6 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_PERF \
 		-DPTT_SOCK_SVC_ENABLE \
 		-Wall\
-		-Werror\
 		-D__linux__ \
 		-DHAL_SELF_STA_PER_BSS=1 \
 		-DWLAN_FEATURE_VOWIFI_11R \
@@ -1818,6 +1817,10 @@ endif
 
 ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
+endif
+
+ifeq ($(cc-name),clang)
+EXTRA_CFLAGS += -w
 endif
 
 # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
