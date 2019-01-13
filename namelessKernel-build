@@ -6,7 +6,7 @@ args="-j$(nproc --all) O=out \
                       ARCH=arm64 \
                       CC=$CLANG_PATH \
                       CLANG_TRIPLE=aarch64-linux-gnu- \
-                      CROSS_COMPILE=${HOME}/gcc-arm-8.2-2018.11-x86_64-aarch64-linux-gnu/bin/aarch64-linux-gnu-";
+                      CROSS_COMPILE=${HOME}/aarch64-linux-gnu/bin/aarch64-linux-gnu-";
 
 z2_plus(){
 export KBUILD_BUILD_USER="z2_plus"
