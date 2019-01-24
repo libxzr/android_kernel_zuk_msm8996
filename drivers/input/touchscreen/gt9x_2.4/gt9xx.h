@@ -79,6 +79,7 @@ struct goodix_ts_data {
 	struct input_dev  *input_dev;
 	struct hrtimer timer;
 	struct work_struct  work;
+	struct work_struct pm_work;
 	s32 irq_is_disable;
 	s32 irq_is_free;
 	s32 use_irq;
@@ -119,6 +120,8 @@ struct goodix_ts_data {
 #endif
 	
 };
+
+static bool screen_off;
 
 extern u16 show_len;
 extern u16 total_len;
