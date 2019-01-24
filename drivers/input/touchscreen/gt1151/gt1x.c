@@ -730,39 +730,23 @@ static int gt1x_ts_remove(struct i2c_client *client)
 /* frame buffer notifier block control the suspend/resume procedure */
 static struct notifier_block gt1x_fb_notifier;
 
+static void touch_pm_worker(struct work_struct *work)
+{
+	if (screen_off)
+		gt1x_suspend();
+	else
+		gt1x_resume();
+}
+
 static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long event, void *data)
 {
 	struct fb_event *ev_data = data;
 	int *blank;
 
-#if GTP_INCELL_PANEL
-	#ifndef FB_EARLY_EVENT_BLANK
-		#error Need add FB_EARLY_EVENT_BLANK to fbmem.c
-	#endif
-	
-	if (ev_data && ev_data->data && event == FB_EARLY_EVENT_BLANK) {
-		blank = ev_data->data;
-		if (*blank == FB_BLANK_UNBLANK) {
-			GTP_DEBUG("Resume by fb notifier.");
-			gt1x_resume();
-		}
-	}
-#else
 	if (ev_data && ev_data->data && event == FB_EVENT_BLANK) {
 		blank = ev_data->data;
-		if (*blank == FB_BLANK_UNBLANK) {
-			GTP_DEBUG("Resume by fb notifier.");
-			gt1x_resume();
-		}
-	}
-#endif
-
-	if (ev_data && ev_data->data && event == FB_EVENT_BLANK) {
-		blank = ev_data->data;
-		if (*blank == FB_BLANK_POWERDOWN) {
-			GTP_DEBUG("Suspend by fb notifier.");
-			gt1x_suspend();
-		}
+		screen_off = *blank != FB_BLANK_UNBLANK;
+		schedule_work(&pm_work);
 	}
 
 	return 0;
@@ -817,6 +801,7 @@ static struct early_suspend gt1x_early_suspend = {
 static int gt1x_register_powermanger(void)
 {
 #if   defined(CONFIG_FB)
+	INIT_WORK(&pm_work, touch_pm_worker);
 	gt1x_fb_notifier.notifier_call = gtp_fb_notifier_callback;
 	fb_register_client(&gt1x_fb_notifier);
 	
