@@ -40,7 +40,7 @@ make $args mrproper
 
 if [ "$1" == z2_plus ]
 then
-zipname="(z2_plus)Nameless Kernel[4.4-EAS] Rx.zip"
+zipname="(z2_plus)Nameless Kernel[4.4-HMP] Rx.zip"
 ziped=0
 if [ "$2" == "mkzip" ]
 then
@@ -84,7 +84,7 @@ fi
 
 if [ "$1" == z2_row ]
 then
-zipname="(z2_row)Nameless Kernel[4.4-EAS] Rx.zip"
+zipname="(z2_row)Nameless Kernel[4.4-HMP] Rx.zip"
 ziped=0
 if [ "$2" == "mkzip" ]
 then
