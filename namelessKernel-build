@@ -1,5 +1,5 @@
 #!/bin/bash
-CLANG_PATH="${HOME}/linux-x86/clang-r346389c/bin/clang"
+CLANG_PATH="${HOME}/linux-x86/clang-r349610/bin/clang"
 export KBUILD_COMPILER_STRING=$($CLANG_PATH --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 
 args="-j$(nproc --all) O=out \
