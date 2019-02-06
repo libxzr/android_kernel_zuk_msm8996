@@ -190,6 +190,8 @@ const char *dbglog_get_module_str(A_UINT32 module_id)
         return "NAN20";
     case WLAN_MODULE_QBOOST:
         return "QBOOST";
+    case WLAN_MODULE_HPCS_PULSE:
+        return "HPCS";
     default:
         return "UNKNOWN";
     }
@@ -1628,6 +1630,68 @@ char * DBG_MSG_ARR[WLAN_MODULE_ID_MAX][MAX_DBG_MSGS] =
         DBG_STRING(WLAN_MODULE_QBOOST_DBGID_WLAN_PEER_NOT_FOUND),
         DBG_STRING(WLAN_MODULE_QBOOST_DEFINITION_END),
     },
+    {
+        /* WLAN_MODULE_P2P_LISTEN_OFFLOAD */
+        ""
+    },
+    {
+        /* WLAN_MODULE_HALPHY */
+        ""
+    },
+    {
+        /* WAL_MODULE_ENQ */
+        ""
+    },
+    {
+        /* WLAN_MODULE_GNSS */
+        ""
+    },
+    {
+        /* WLAN_MODULE_WAL_MEM */
+        ""
+    },
+    {
+        /* WLAN_MODULE_SCHED_ALGO */
+        ""
+    },
+    {
+        /* WLAN_MODULE_TX */
+        ""
+    },
+    {
+        /* WLAN_MODULE_RX */
+        ""
+    },
+    {
+        /* WLAN_MODULE_WLM */
+        ""
+    },
+    {
+         /* WLAN_MODULE_RU_ALLOCATOR */
+        ""
+    },
+    {
+        /* WLAN_MODULE_11K_OFFLOAD */
+        ""
+    },
+    {
+        /* WLAN_MODULE_STA_TWT */
+        ""
+    },
+    {
+        /* WLAN_MODULE_AP_TWT */
+        ""
+    },
+    {
+         /* WLAN_MODULE_UL_OFDMA */
+        ""
+    },
+    {
+        DBG_STRING(HPCS_PULSE_START),
+        DBG_STRING(HPCS_PULSE_LF_TIMER),
+        DBG_STRING(HPCS_PULSE_HF_TIMER),
+        DBG_STRING(HPCS_PULSE_POWER_SAVE),
+    },
 
 };
 
@@ -1977,7 +2041,7 @@ dbglog_debugfs_raw_data(wmi_unified_t wmi_handle, const u_int8_t *buf, A_UINT32 
     /* Need to pad each record to fixed length ATH6KL_FWLOG_PAYLOAD_SIZE */
     memset(slot->payload + length, 0, ATH6KL_FWLOG_PAYLOAD_SIZE - length);
 
-    spin_lock(&fwlog->fwlog_queue.lock);
+    adf_os_raw_spin_lock(&fwlog->fwlog_queue.lock);
 
     __skb_queue_tail(&fwlog->fwlog_queue, skb);
 
@@ -1990,7 +2054,7 @@ dbglog_debugfs_raw_data(wmi_unified_t wmi_handle, const u_int8_t *buf, A_UINT32 
         kfree_skb(skb);
     }
 
-    spin_unlock(&fwlog->fwlog_queue.lock);
+    adf_os_raw_spin_unlock(&fwlog->fwlog_queue.lock);
 
     return TRUE;
 }
@@ -4298,13 +4362,13 @@ static ssize_t dbglog_block_read(struct file *file,
     if (!buf)
        return -ENOMEM;
 
-    spin_lock_bh(&fwlog->fwlog_queue.lock);
+    adf_os_raw_spin_lock_bh(&fwlog->fwlog_queue.lock);
 
     if (skb_queue_len(&fwlog->fwlog_queue) == 0) {
        /* we must init under queue lock */
        init_completion(&fwlog->fwlog_completion);
 
-       spin_unlock_bh(&fwlog->fwlog_queue.lock);
+       adf_os_raw_spin_unlock_bh(&fwlog->fwlog_queue.lock);
 
        ret = wait_for_completion_interruptible(
                     &fwlog->fwlog_completion);
@@ -4313,7 +4377,7 @@ static ssize_t dbglog_block_read(struct file *file,
                return ret;
        }
 
-       spin_lock_bh(&fwlog->fwlog_queue.lock);
+       adf_os_raw_spin_lock_bh(&fwlog->fwlog_queue.lock);
     }
 
     while ((skb = __skb_dequeue(&fwlog->fwlog_queue))) {
@@ -4329,7 +4393,7 @@ static ssize_t dbglog_block_read(struct file *file,
        kfree_skb(skb);
     }
 
-    spin_unlock_bh(&fwlog->fwlog_queue.lock);
+    adf_os_raw_spin_unlock_bh(&fwlog->fwlog_queue.lock);
 
     /* FIXME: what to do if len == 0? */
     not_copied = copy_to_user(user_buf, buf, len);
