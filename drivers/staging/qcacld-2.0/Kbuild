@@ -348,7 +348,7 @@ CONFIG_FEATURE_STATS_EXT := 1
 CONFIG_STATICALLY_ADD_11P_CHANNELS := n
 
 #Enable thermal shutdown
-CONFIG_WLAN_THERMAL_SHUTDOWN := 0
+CONFIG_WLAN_THERMAL_SHUTDOWN := 1
 
 #Enable the Disable Channel Switch
 CONFIG_WLAN_DISABLE_CHANNEL_SWITCH := 1
@@ -475,6 +475,11 @@ endif
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_tdls.o
+endif
+
+ifeq ($(CONFIG_NETWORK_PHY_TIMESTAMPING), y)
+CONFIG_WLAN_SYNC_TSF_PLUS := y
+CONFIG_WLAN_SYNC_TSF_PTP := y
 endif
 
 ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
@@ -1018,6 +1023,7 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_PERF \
 		-DPTT_SOCK_SVC_ENABLE \
 		-Wall\
+		-Werror\
 		-D__linux__ \
 		-DHAL_SELF_STA_PER_BSS=1 \
 		-DWLAN_FEATURE_VOWIFI_11R \
@@ -1617,6 +1623,10 @@ ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
 CDEFINES += -DWLAN_FEATURE_TSF_PLUS
 endif
 
+ifeq ($(CONFIG_WLAN_SYNC_TSF_PTP), y)
+CDEFINES += -DWLAN_FEATURE_TSF_PTP
+endif
+
 # Enable target dump for non-qualcomm platform
 ifeq ($(CONFIG_NON_QC_PLATFORM), y)
 CDEFINES += -DCONFIG_NON_QC_PLATFORM
@@ -1740,10 +1750,6 @@ endif
 
 ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
-endif
-
-ifeq ($(cc-name),clang)
-EXTRA_CFLAGS += -w
 endif
 
 # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
