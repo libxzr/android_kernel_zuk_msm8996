@@ -2582,7 +2582,7 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 	 * while there is healthy amount of data transfer going on by
 	 * releasing the wake_lock after some delay.
 	 */
-	schedule_delayed_work(&hdd_ipa->wake_lock_work,
+	queue_delayed_work(system_power_efficient_wq, &hdd_ipa->wake_lock_work,
 			msecs_to_jiffies(HDD_IPA_RX_INACTIVITY_MSEC_DELAY));
 
 	adf_os_spin_unlock_bh(&hdd_ipa->rm_lock);

@@ -2863,7 +2863,8 @@ static void wlan_hdd_tdls_scan_init_work(hdd_context_t *pHddCtx,
         pHddCtx->tdls_scan_ctxt.attempt = 0;
         pHddCtx->tdls_scan_ctxt.magic = TDLS_CTX_MAGIC;
     }
-    schedule_delayed_work(&pHddCtx->tdls_scan_ctxt.tdls_scan_work, delay);
+    queue_delayed_work(system_power_efficient_wq,
+					   &pHddCtx->tdls_scan_ctxt.tdls_scan_work, delay);
 }
 
 /* return negative = caller should stop and return error code immediately
