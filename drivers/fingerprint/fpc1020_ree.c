@@ -39,19 +39,19 @@
 struct fpc1020_data {
 	struct device   *dev;
 	struct pinctrl  *pin;
-	wait_queue_head_t wq_irq_return;
 	/*Set pins*/
 	int reset_gpio;
 	int irq_gpio;
 	int irq;
 	bool irq_enabled;
+	bool utouch_disable;
 	struct notifier_block fb_notif;
 	/*Input device*/
 	struct input_dev *input_dev;
 	struct work_struct pm_work;
 	struct work_struct input_report_work;
 	struct workqueue_struct *fpc1020_wq;
-	u8  report_key;
+	int report_key;
 	int screen_on;
 	int proximity_state; /* 0:far 1:near */
 };
@@ -71,10 +71,6 @@ static void config_irq(struct fpc1020_data *fpc1020, bool enabled)
 /* From drivers/input/keyboard/gpio_keys.c */
 extern bool home_button_pressed(void);
 extern void reset_home_button(void);
-
-static bool reset;
-
-static bool utouch_disable;
 
 static int fb_notifier_callback(struct notifier_block *self,
 		unsigned long event, void *data);
@@ -127,7 +123,7 @@ static ssize_t set_key(struct device *device,
 	bool home_pressed;
 
 	retval = kstrtou64(buffer, 0, &val);
-	if (!retval && !utouch_disable) {
+	if (!retval && !fpc1020->utouch_disable) {
 		if (val == KEY_HOME)
 			/* Convert to U-touch long press keyValue */
 			val = KEY_NAVI_LONG;
@@ -155,16 +151,18 @@ static DEVICE_ATTR(key, S_IRUSR | S_IWUSR, get_key, set_key);
 static ssize_t utouch_store_disable(struct device *dev, 
 		struct device_attribute *attr, const char *buf, size_t count)
 {
-    int value;
+	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
+	int value;
+
  	if (1 != sscanf(buf, "%d", &value)) {
 		dev_err(dev, "Failed to parse integer: <%s>\n", buf);
 		return -EINVAL;
 	}
  	if (value == 1) {
-		utouch_disable = true;
+		fpc1020->utouch_disable = true;
 		pr_info("utouch disabled\n");
 	} else {
-		utouch_disable = false;
+		fpc1020->utouch_disable = false;
 		pr_info("utouch enabled\n");
 	}
  	return count;
@@ -173,7 +171,9 @@ static ssize_t utouch_store_disable(struct device *dev,
 static ssize_t utouch_show_disable(struct device *dev, 
 		struct device_attribute *attr, char *buf)
 {
-	if (utouch_disable)
+	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
+
+	if (fpc1020->utouch_disable)
 		return sprintf(buf, "1\n"); 
 	else
 		return sprintf(buf, "0\n"); 
