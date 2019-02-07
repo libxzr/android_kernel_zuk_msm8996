@@ -72,7 +72,7 @@ static void config_irq(struct fpc1020_data *fpc1020, bool enabled)
 extern bool home_button_pressed(void);
 extern void reset_home_button(void);
 
-bool reset;
+static bool reset;
 
 static bool utouch_disable;
 
@@ -152,31 +152,31 @@ static ssize_t set_key(struct device *device,
 
 static DEVICE_ATTR(key, S_IRUSR | S_IWUSR, get_key, set_key);
 
-static ssize_t utouch_store_disable(struct device *dev,
+static ssize_t utouch_store_disable(struct device *dev, 
 		struct device_attribute *attr, const char *buf, size_t count)
 {
     int value;
-	if (1 != sscanf(buf, "%d", &value)) {
+ 	if (1 != sscanf(buf, "%d", &value)) {
 		dev_err(dev, "Failed to parse integer: <%s>\n", buf);
 		return -EINVAL;
 	}
-	if (value == 1) {
+ 	if (value == 1) {
 		utouch_disable = true;
 		pr_info("utouch disabled\n");
 	} else {
 		utouch_disable = false;
 		pr_info("utouch enabled\n");
 	}
-	return count;
+ 	return count;
 }
 
-static ssize_t utouch_show_disable(struct device *dev,
+static ssize_t utouch_show_disable(struct device *dev, 
 		struct device_attribute *attr, char *buf)
 {
 	if (utouch_disable)
-		return sprintf(buf, "1\n");
+		return sprintf(buf, "1\n"); 
 	else
-		return sprintf(buf, "0\n");
+		return sprintf(buf, "0\n"); 
 }
 static DEVICE_ATTR(utouch_disable, S_IRUGO|S_IWUSR, utouch_show_disable, utouch_store_disable);
 
@@ -429,11 +429,11 @@ static int fb_notifier_callback(struct notifier_block *self,
 		if (*blank == FB_BLANK_UNBLANK) {
 			pr_debug("ScreenOn\n");
 			fpc1020->screen_on = 1;
-			schedule_work(&fpc1020->pm_work);
+			queue_work(fpc1020->fpc1020_wq, &fpc1020->pm_work);
 		} else if (*blank == FB_BLANK_POWERDOWN) {
 			pr_debug("ScreenOff\n");
 			fpc1020->screen_on = 0;
-			schedule_work(&fpc1020->pm_work);
+			queue_work(fpc1020->fpc1020_wq, &fpc1020->pm_work);
 		}
 	}
 	return 0;
