@@ -222,12 +222,6 @@ int snd_soc_write(struct snd_soc_codec *codec, unsigned int reg,
 			strcmp("headphone_gain_store", caller) != 0) {
 		return 0;
 	}
-	sprintf(caller, "%ps", __builtin_return_address(0));
-	if ((		reg == WCD9335_CDC_RX7_RX_VOL_CTL ||
-			reg == WCD9335_CDC_RX7_RX_VOL_MIX_CTL) &&
-			strcmp("speaker_gain_store", caller) != 0) {
-		return 0;
-	}
 #endif
 	return snd_soc_component_write(&codec->component, reg, val);
 }
@@ -255,12 +249,6 @@ int snd_soc_update_bits(struct snd_soc_codec *codec, unsigned int reg,
 			reg == WCD9335_CDC_RX2_RX_VOL_CTL ||
 			reg == WCD9335_CDC_RX2_RX_VOL_MIX_CTL) &&
 			strcmp("headphone_gain_store", caller) != 0) {
-		return 0;
-	}
-	sprintf(caller, "%ps", __builtin_return_address(0));
-	if ((		reg == WCD9335_CDC_RX7_RX_VOL_CTL ||
-			reg == WCD9335_CDC_RX7_RX_VOL_MIX_CTL) &&
-			strcmp("speaker_gain_store", caller) != 0) {
 		return 0;
 	}
 #endif
