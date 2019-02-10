@@ -16,9 +16,6 @@
 bool enable_fb_boost=true;
 module_param_named(enable_fb_boost, enable_fb_boost, bool, 0644);
 
-bool enable_cpu_boost=true;
-module_param_named(enable_cpu_boost, enable_cpu_boost, bool, 0644);
-
 u32 input_boost_freq_perf=CONFIG_INPUT_BOOST_FREQ_PERF;
 module_param_named(input_boost_freq_perf, input_boost_freq_perf, int, 0644);
 

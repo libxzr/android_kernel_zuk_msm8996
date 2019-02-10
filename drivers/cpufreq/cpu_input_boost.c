@@ -38,9 +38,6 @@ static struct boost_drv *boost_drv_g __read_mostly;
 static u32 get_boost_freq(struct boost_drv *b, u32 cpu)
 {
 	#if CONFIG_BOOST_CONTROL
-	if (!enable_cpu_boost)
-	return 0;
-
 	if (cpumask_test_cpu(cpu, cpu_lp_mask))
 		return input_boost_freq_lp;
 
