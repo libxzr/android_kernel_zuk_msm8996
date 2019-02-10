@@ -14,7 +14,6 @@
 #define _BOOST_CONTROL_H_
 
 extern bool enable_fb_boost;
-extern bool enable_cpu_boost;
 extern u32 input_boost_freq_perf;
 extern u32 input_boost_freq_lp;
 extern u32 wake_boost_duration;
