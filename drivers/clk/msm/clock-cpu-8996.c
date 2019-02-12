@@ -765,7 +765,7 @@ set_rate_fail:
 	}
 
 fail:
-	if (cpuclk->alt_pll && (n_alt_freqs > 0)) {
+	if (alt_pll_prev_rate && cpuclk->alt_pll && (n_alt_freqs > 0)) {
 		if (!cpu_clocks_v3)
 			mutex_lock(&scm_lmh_lock);
 		err_ret = clk_set_rate(cpuclk->alt_pll, alt_pll_prev_rate);
