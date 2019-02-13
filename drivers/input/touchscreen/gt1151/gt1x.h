@@ -59,7 +59,4 @@ extern int gt1x_int_gpio;
 #define GTP_GPIO_OUTPUT(pin,level)      gpio_direction_output(pin,level)
 #define GTP_IRQ_TAB                     {IRQ_TYPE_EDGE_RISING, IRQ_TYPE_EDGE_FALLING, IRQ_TYPE_LEVEL_LOW, IRQ_TYPE_LEVEL_HIGH}
 
-static struct work_struct pm_work;
-static bool screen_off;
-
 #endif /* _GOODIX_GT1X_H_ */

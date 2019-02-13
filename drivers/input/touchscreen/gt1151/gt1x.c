@@ -726,7 +726,10 @@ static int gt1x_ts_remove(struct i2c_client *client)
 	return 0;
 }
 
-#if   defined(CONFIG_FB)	
+#if   defined(CONFIG_FB)
+static struct work_struct pm_work;
+static bool screen_off;
+
 /* frame buffer notifier block control the suspend/resume procedure */
 static struct notifier_block gt1x_fb_notifier;
 
