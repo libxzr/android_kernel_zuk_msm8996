@@ -335,3 +335,11 @@
 &i2c_8 {
 	/delete-node/ nq@28;
 };
+
+&pm8994_vadc {
+	/delete-node/ chan@75;
+};
+
+&pm8994_adc_tm {
+	/delete-node/ chan@75;
+};
