@@ -25,7 +25,6 @@
 #include <linux/sysfs.h>
 #include <linux/fastchg.h>
 #include <linux/string.h>
-#include <linux/module.h>
 
 int force_fast_charge = 0;
 
