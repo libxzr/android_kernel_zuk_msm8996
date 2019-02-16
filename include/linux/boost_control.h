@@ -19,4 +19,5 @@ extern u32 input_boost_freq_lp;
 extern u32 wake_boost_duration;
 extern u32 cpubw_boost_freq;
 extern u32 cpubw_wake_boost_duration;
+extern u16 dynamic_stune_boost;
 #endif

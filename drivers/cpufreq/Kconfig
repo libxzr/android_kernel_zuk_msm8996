@@ -407,5 +407,12 @@ config BOOST_CONTROL
 	default n
 	help
 	  A simple driver to control sultan's boost in userspace.
+
+config DYNAMIC_STUNE_BOOST_VALUE
+	int "Default Dynamic SchedTune boosting value"
+	depends on DYNAMIC_STUNE_BOOST
+	default 0
+	help
+	  This option decide the default value of dynamic stune boost
 	
 endmenu
