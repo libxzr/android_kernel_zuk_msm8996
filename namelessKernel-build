@@ -13,6 +13,7 @@ gcc4_32_path="${HOME}/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
 action="build"
 release="false"
 version="X"
+source=`pwd`
 
 date="`date +"%m%d%H%M"`"
 
@@ -162,6 +163,7 @@ mkzip (){
 	zip -r "$zipname" *
 	cp -f "$zipname" ~
 	rm -f "$zipname"
+	cd $source
 	print "All done.Find it at ${HOME}/$zipname" green
 }
 
