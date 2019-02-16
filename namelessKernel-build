@@ -1,127 +1,206 @@
 #!/bin/bash
-CLANG_PATH="${HOME}/linux-x86/clang-r349610/bin/clang"
-export KBUILD_COMPILER_STRING=$($CLANG_PATH --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
+input=${*}
+
+device="all"
+dirty="false"
+tc="clang"
+
+clang_path="${HOME}/linux-x86/clang-r349610/bin/clang"
+gcc_path="${HOME}/aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+gcc4_path="${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+gcc4_32_path="${HOME}/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
+
+action="build"
+release="false"
+version="X"
+
+date="`date +"%m%d%H%M"`"
 
 args="-j$(nproc --all) O=out \
-                      ARCH=arm64 \
-                      CC=$CLANG_PATH \
-                      CLANG_TRIPLE=aarch64-linux-gnu- \
-                      CROSS_COMPILE=${HOME}/aarch64-linux-gnu/bin/aarch64-linux-gnu-
-		      CROSS_COMPILE_ARM32=${HOME}/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-";
+	ARCH=arm64 \
+	SUBARCH=arm64 "
 
-z2_plus(){
-export KBUILD_BUILD_USER="z2_plus"
-export KBUILD_BUILD_HOST="LibXZR"
-make $args z2_plus_defconfig&&make $args
-makezip
+print (){
+case ${2} in
+	"red")
+	echo -e "\033[31m $1 \033[0m";;
+
+	"blue")
+	echo -e "\033[34m $1 \033[0m";;
+
+	"yellow")
+	echo -e "\033[33m $1 \033[0m";;
+
+	"purple")
+	echo -e "\033[35m $1 \033[0m";;
+
+	"sky")
+	echo -e "\033[36m $1 \033[0m";;
+
+	"green")
+	echo -e "\033[32m $1 \033[0m";;
+
+	*)
+	echo $1
+	;;
+	esac
 }
 
+for i in ${input}
+	do
+		case ${i} in
+			"z2_plus")
+			device="z2_plus";;
 
-z2_row(){
-export KBUILD_BUILD_USER="z2_row"
-export KBUILD_BUILD_HOST="LibXZR"
-make $args z2_row_defconfig&&make $args
-makezip
-}
+			"z2_row")
+			device="z2_row";;
 
-makezip(){
-cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
-cd ~/AnyKernel2
-git checkout z2/eas
-zip -r "$zipname" *
-cp -f "$zipname" ~
-rm -f "$zipname"
-}
+			"all")
+			device="all";;
+			
+			"--dirty"|"-d")
+			dirty="true";;
+
+			"--gcc4")
+			tc="gcc4";;
+
+			"--gcc")
+			tc="gcc";;
+
+			"--clang")
+			tc="clang";;
+
+			"--regen"|"-rg"|"regen")
+			action="regen";;
+
+		*)
+		did="false"
+		if [[ $i =~ "-r=" ]];then
+		release="true"&&version="${i#*r=}"&&did="true"
+		fi
+		
+		if [ $did == "false" ]
+		then
+		print "Error input" red&&exit
+		fi
+
+		;;
+		esac
+	done
+if [ $release == "true" ]
+then
+print "You are building a release version:R$version" green
+args+="LOCALVERSION=-R$version "
+else
+print "You are building a snapshot version:$date" yellow
+args+="LOCALVERSION=-$date "
+fi
+
+if [ $tc == "clang" ]
+then
+args+="CC=$clang_path \
+	CLANG_TRIPLE=aarch64-linux-gnu- \
+	CROSS_COMPILE=$gcc_path "
+fi
+
+if [ $tc == "gcc4" ]
+then
+args+="CROSS_COMPILE=$gcc4_path "
+fi
+
+if [ $tc == "gcc" ]
+then
+args+="CROSS_COMPILE=$gcc_path "
+fi
+
+args+="CROSS_COMPILE_ARM32=$gcc4_32_path "
 
 clean(){
-make mrproper
-make $args mrproper
+	make mrproper
+	make $args mrproper
 }
 
-if [ "$1" == z2_plus ]
+build_z2_plus(){
+	export KBUILD_BUILD_USER="z2_plus"
+	export KBUILD_BUILD_HOST="LibXZR"
+	print "Building Kernel for z2_plus..." blue
+	make $args z2_plus_defconfig&&make $args
+	mkzip "z2_plus"
+}
+
+build_z2_row(){
+	export KBUILD_BUILD_USER="z2_row"
+	export KBUILD_BUILD_HOST="LibXZR"
+	print "Building Kernel for z2_row..." blue
+	make $args z2_row_defconfig&&make $args
+	mkzip "z2_row"
+}
+
+regen_z2_plus(){
+	make $args z2_plus_defconfig
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_plus_defconfig
+}
+
+regen_z2_row(){
+	make $args z2_row_defconfig
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_row_defconfig
+}
+
+mkzip (){
+	if [ $release == "true" ];then
+	zipname="(${1})Nameless Kernel[4.4-EAS] R$version.zip"
+	else
+	zipname="(${1})Nameless Kernel[4.4-EAS] $date.zip"
+	fi
+	cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
+	cd ~/AnyKernel2
+	git checkout z2/eas
+	zip -r "$zipname" *
+	cp -f "$zipname" ~
+	rm -f "$zipname"
+	print "All done.Find it at ${HOME}/$zipname" green
+}
+
+
+
+if [ $action == "build" ]
 then
-zipname="(z2_plus)Nameless Kernel[4.4-EAS] Rx.zip"
-ziped=0
-if [ "$2" == "mkzip" ]
-then
-makezip
-ziped=1
+	if [ $dirty == "false" ]
+	then
+		clean
+	fi
+case ${device} in
+	"z2_plus")
+	build_z2_plus;;
+
+	"z2_row")
+	build_z2_row;;
+
+	"all")
+	build_z2_plus&&build_z2_row;;
+
+	*)
+
+	;;
+	esac
 fi
 
-if [ "$2" == "menu" ]
+if [ $action == "regen" ]
 then
-make $args z2_plus_defconfig
-make $args menuconfig
-ziped=1
-fi
+case ${device} in
+	"z2_plus")
+	regen_z2_plus;;
 
-if [ "$2" == "save" ]
-then
-make $args savedefconfig
-ziped=1
-fi
+	"z2_row")
+	regen_z2_row;;
 
-if [ "$2" == "regen" ]
-then
-make $args z2_plus_defconfig
-make $args savedefconfig
-mv out/defconfig arch/arm64/configs/z2_plus_defconfig
-ziped=1
-fi
+	"all")
+	regen_z2_plus&&regen_z2_row;;
 
-if [ "$2" == "dirty" ]
-then
-z2_plus
-else
-if [ $ziped == 0 ]
-then
-clean
-z2_plus
-fi
-fi
+	*)
 
+	;;
+	esac
 fi
-
-if [ "$1" == z2_row ]
-then
-zipname="(z2_row)Nameless Kernel[4.4-EAS] Rx.zip"
-ziped=0
-if [ "$2" == "mkzip" ]
-then
-makezip
-ziped=1
-fi
-
-if [ "$2" == "menu" ]
-then
-make $args z2_row_defconfig
-make $args menuconfig
-ziped=1
-fi
-
-if [ "$2" == "save" ]
-then
-make $args savedefconfig
-ziped=1
-fi
-
-if [ "$2" == "regen" ]
-then
-make $args z2_row_defconfig
-make $args savedefconfig
-mv out/defconfig arch/arm64/configs/z2_row_defconfig
-ziped=1
-fi
-
-if [ "$2" == "dirty" ]
-then
-z2_row
-else
-if [ $ziped == 0 ]
-then
-clean
-z2_row
-fi
-fi
-fi
-
