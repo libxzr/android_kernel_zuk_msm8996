@@ -14,11 +14,6 @@
 
 unsigned long last_input_time;
 
-#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-static unsigned short dynamic_stune_boost;
-module_param(dynamic_stune_boost, short, 0644);
-#endif
-
 /* Available bits for boost_drv state */
 #define SCREEN_AWAKE		BIT(0)
 #define INPUT_BOOST		BIT(1)
