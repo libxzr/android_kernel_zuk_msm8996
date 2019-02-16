@@ -123,6 +123,7 @@ clean(){
 build_z2_plus(){
 	export KBUILD_BUILD_USER="z2_plus"
 	export KBUILD_BUILD_HOST="LibXZR"
+	[ $dirty == "false" ]&&clean
 	print "Building Kernel for z2_plus..." blue
 	make $args z2_plus_defconfig&&make $args
 	mkzip "z2_plus"
@@ -131,6 +132,7 @@ build_z2_plus(){
 build_z2_row(){
 	export KBUILD_BUILD_USER="z2_row"
 	export KBUILD_BUILD_HOST="LibXZR"
+	[ $dirty == "false" ]&&clean
 	print "Building Kernel for z2_row..." blue
 	make $args z2_row_defconfig&&make $args
 	mkzip "z2_row"
@@ -167,10 +169,6 @@ mkzip (){
 
 if [ $action == "build" ]
 then
-	if [ $dirty == "false" ]
-	then
-		clean
-	fi
 case ${device} in
 	"z2_plus")
 	build_z2_plus;;
