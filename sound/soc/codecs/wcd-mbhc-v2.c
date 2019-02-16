@@ -2004,22 +2004,10 @@ static irqreturn_t wcd_mbhc_btn_press_handler(int irq, void *data)
 	struct wcd_mbhc *mbhc = data;
 	int mask;
 	unsigned long msec_val;
-	unsigned long msec_delta;
-	static unsigned long msec_first = 0;
 
 	pr_debug("%s: enter\n", __func__);
 	complete(&mbhc->btn_press_compl);
 	WCD_MBHC_RSC_LOCK(mbhc);
-
-	msec_delta = jiffies_to_msecs(jiffies - msec_first);
-	if(msec_delta < 100){
-		pr_err("%s:cancel repeat press,msec_delta = %ld\n", __func__,msec_delta);
-		goto done;
-	}
-	msec_first = jiffies;
-
-	/* send event to sw intr handler*/
-	mbhc->is_btn_press = true;
 
 	wcd_cancel_btn_work(mbhc);
 	if (wcd_swch_level_remove(mbhc)) {
