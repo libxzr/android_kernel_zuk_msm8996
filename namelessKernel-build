@@ -91,6 +91,7 @@ for i in ${input}
 		;;
 		esac
 	done
+if [ $action == "build" ];then
 if [ $release == "true" ]
 then
 print "You are building a release version:R$version" green
@@ -98,7 +99,7 @@ args+="LOCALVERSION=-R$version "
 else
 print "You are building a snapshot version:$date" yellow
 args+="LOCALVERSION=-$date "
-fi
+fi;fi
 
 if [ $tc == "clang" ]
 then
