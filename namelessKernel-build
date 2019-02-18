@@ -74,6 +74,9 @@ for i in ${input}
 			"--regen"|"-rg"|"regen")
 			action="regen";;
 
+			"--menu"|"-m")
+			action="menu";;
+
 		*)
 		did="false"
 		if [[ $i =~ "-r=" ]];then
@@ -139,6 +142,24 @@ build_z2_row(){
 	mkzip "z2_row"
 }
 
+menu_z2_plus(){
+	[ $dirty == "false" ]&&clean
+	make $args z2_plus_defconfig&&make $args menuconfig
+	print "Press enter to save" green
+	read
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_plus_defconfig
+}
+
+menu_z2_row(){
+	[ $dirty == "false" ]&&clean
+	make $args z2_row_defconfig&&make $args menuconfig
+	print "Press enter to save" green
+	read
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_row_defconfig
+}
+
 regen_z2_plus(){
 	make $args z2_plus_defconfig
 	make $args savedefconfig
@@ -198,6 +219,21 @@ case ${device} in
 
 	"all")
 	regen_z2_plus&&regen_z2_row;;
+
+	*)
+
+	;;
+	esac
+fi
+
+if [ $action == "menu" ]
+then
+case ${device} in
+	"z2_plus")
+	menu_z2_plus;;
+
+	"z2_row")
+	menu_z2_row;;
 
 	*)
 
