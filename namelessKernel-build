@@ -82,6 +82,10 @@ for i in ${input}
 		if [[ $i =~ "-r=" ]];then
 		release="true"&&version="${i#*r=}"&&did="true"
 		fi
+
+		if [[ $i =~ "-v=" ]];then
+		date="${i#*v=}"&&did="true"
+		fi
 		
 		if [ $did == "false" ]
 		then
