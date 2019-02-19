@@ -1099,7 +1099,7 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 	kctl_prtd = (struct dsp_stream_callback_prtd *)
 			kcontrol->private_data;
 	if (kctl_prtd == NULL) {
-		pr_err("%s: ASM Stream PP event queue is not initialized.\n",
+		pr_err_ratelimited("%s: ASM Stream PP event queue is not initialized.\n",
 			__func__);
 		ret = -EINVAL;
 		goto done;
@@ -1108,7 +1108,7 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 	spin_lock_irqsave(&kctl_prtd->prtd_spin_lock, spin_flags);
 	pr_debug("%s: %d events in queue.\n", __func__, kctl_prtd->event_count);
 	if (list_empty(&kctl_prtd->event_queue)) {
-		pr_err("%s: ASM Stream PP event queue is empty.\n", __func__);
+		pr_err_ratelimited("%s: ASM Stream PP event queue is empty.\n", __func__);
 		ret = -EINVAL;
 		spin_unlock_irqrestore(&kctl_prtd->prtd_spin_lock, spin_flags);
 		goto done;

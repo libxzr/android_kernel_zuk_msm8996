@@ -808,8 +808,8 @@ int msm_pcm_routing_set_channel_mixer_cfg(
 		channel_mixer_v2[fe_id][type].out_ch_map[i] =
 			params->out_ch_map[i];
 
-	for (i = 0; i < ADM_MAX_CHANNELS; i++)
-		for (j = 0; j < ADM_MAX_CHANNELS; j++)
+	for (i = 0, j = 0; i < ADM_MAX_CHANNELS && j < ADM_MAX_CHANNELS;
+		 i++, j++)
 			channel_mixer_v2[fe_id][type].channel_weight[i][j] =
 				params->channel_weight[i][j];
 	channel_mixer_v2[fe_id][type].override_cfg = 1;
@@ -12033,23 +12033,23 @@ static const char * const int4_mi2s_rx_vi_fb_tx_stereo_mux_text[] = {
 	"ZERO", "INT5_MI2S_TX"
 };
 
-static const int const slim0_rx_vi_fb_tx_lch_value[] = {
+static const int slim0_rx_vi_fb_tx_lch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SLIMBUS_4_TX
 };
 
-static const int const slim0_rx_vi_fb_tx_rch_value[] = {
+static const int slim0_rx_vi_fb_tx_rch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SLIMBUS_4_TX
 };
 
-static const int const mi2s_rx_vi_fb_tx_value[] = {
+static const int mi2s_rx_vi_fb_tx_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SENARY_MI2S_TX
 };
 
-static const int const int4_mi2s_rx_vi_fb_tx_mono_ch_value[] = {
+static const int int4_mi2s_rx_vi_fb_tx_mono_ch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_INT5_MI2S_TX
 };
 
-static const int const int4_mi2s_rx_vi_fb_tx_stereo_ch_value[] = {
+static const int int4_mi2s_rx_vi_fb_tx_stereo_ch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_INT5_MI2S_TX
 };
 
@@ -13600,6 +13600,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia6", "MM_DL6"},
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia7", "MM_DL7"},
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia8", "MM_DL8"},
+	{"PRI_MI2S_RX Audio Mixer", "MultiMedia9", "MM_DL9"},
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia10", "MM_DL10"},
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia11", "MM_DL11"},
 	{"PRI_MI2S_RX Audio Mixer", "MultiMedia12", "MM_DL12"},

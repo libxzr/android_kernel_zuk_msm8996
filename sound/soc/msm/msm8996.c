@@ -20,7 +20,6 @@
 #include <linux/regulator/consumer.h>
 #include <linux/io.h>
 #include <linux/module.h>
-#include <linux/switch.h>
 #include <linux/input.h>
 #include <sound/core.h>
 #include <sound/soc.h>
@@ -358,6 +357,7 @@ static int msm_quat_mi2s_ch = 2;
 #endif
 
 static bool codec_reg_done;
+u64 wsa_dev_id;
 
 static const char *const hifi_function[] = {"Off", "On"};
 static const char *const pin_states[] = {"Disable", "active"};
@@ -469,15 +469,6 @@ struct msm8996_asoc_wcd93xx_codec {
 
 static struct msm8996_asoc_wcd93xx_codec msm8996_codec_fn;
 
-struct msm8996_liquid_dock_dev {
-	int dock_plug_gpio;
-	int dock_plug_irq;
-	int dock_plug_det;
-	struct work_struct irq_work;
-	struct switch_dev audio_sdev;
-};
-static struct msm8996_liquid_dock_dev *msm8996_liquid_dock_dev;
-
 static void *adsp_state_notifier;
 static void *def_tasha_mbhc_cal(void);
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
@@ -564,107 +555,6 @@ static void param_set_mask(struct snd_pcm_hw_params *p, int n, unsigned bit)
 		m->bits[1] = 0;
 		m->bits[bit >> 5] |= (1 << (bit & 31));
 	}
-}
-
-static void msm8996_liquid_docking_irq_work(struct work_struct *work)
-{
-	struct msm8996_liquid_dock_dev *dock_dev =
-		container_of(work, struct msm8996_liquid_dock_dev,
-			     irq_work);
-
-	dock_dev->dock_plug_det =
-		gpio_get_value(dock_dev->dock_plug_gpio);
-
-	switch_set_state(&dock_dev->audio_sdev, dock_dev->dock_plug_det);
-	/* notify to audio deamon */
-	sysfs_notify(&dock_dev->audio_sdev.dev->kobj, NULL, "state");
-}
-
-static irqreturn_t msm8996_liquid_docking_irq_handler(int irq, void *dev)
-{
-	struct msm8996_liquid_dock_dev *dock_dev = dev;
-
-	/* switch speakers should not run in interrupt context */
-	schedule_work(&dock_dev->irq_work);
-	return IRQ_HANDLED;
-}
-
-static int msm8996_liquid_init_docking(void)
-{
-	int ret = 0;
-	int dock_plug_gpio = 0;
-
-	/* plug in docking speaker+plug in device OR unplug one of them */
-	u32 dock_plug_irq_flags = IRQF_TRIGGER_RISING |
-				  IRQF_TRIGGER_FALLING |
-				  IRQF_SHARED;
-
-	dock_plug_gpio = of_get_named_gpio(spdev->dev.of_node,
-					   "qcom,dock-plug-det-irq", 0);
-
-	if (dock_plug_gpio >= 0) {
-		msm8996_liquid_dock_dev =
-		 kzalloc(sizeof(*msm8996_liquid_dock_dev), GFP_KERNEL);
-		if (!msm8996_liquid_dock_dev) {
-			pr_err("msm8996_liquid_dock_dev alloc fail.\n");
-			ret = -ENOMEM;
-			goto exit;
-		}
-
-		msm8996_liquid_dock_dev->dock_plug_gpio = dock_plug_gpio;
-
-		ret = gpio_request(msm8996_liquid_dock_dev->dock_plug_gpio,
-					   "dock-plug-det-irq");
-		if (ret) {
-			pr_err("%s:failed request msm8996_liquid_dock_plug_gpio err = %d\n",
-				__func__, ret);
-			ret = -EINVAL;
-			goto fail_dock_gpio;
-		}
-
-		msm8996_liquid_dock_dev->dock_plug_det =
-			gpio_get_value(
-				msm8996_liquid_dock_dev->dock_plug_gpio);
-		msm8996_liquid_dock_dev->dock_plug_irq =
-			gpio_to_irq(
-				msm8996_liquid_dock_dev->dock_plug_gpio);
-
-		ret = request_irq(msm8996_liquid_dock_dev->dock_plug_irq,
-				  msm8996_liquid_docking_irq_handler,
-				  dock_plug_irq_flags,
-				  "liquid_dock_plug_irq",
-				  msm8996_liquid_dock_dev);
-		if (ret < 0) {
-			pr_err("%s: Request Irq Failed err = %d\n",
-				__func__, ret);
-			goto fail_dock_gpio;
-		}
-
-		msm8996_liquid_dock_dev->audio_sdev.name =
-						QC_AUDIO_EXTERNAL_SPK_1_EVENT;
-
-		if (switch_dev_register(
-			 &msm8996_liquid_dock_dev->audio_sdev) < 0) {
-			pr_err("%s: dock device register in switch diretory failed\n",
-				__func__);
-			goto fail_switch_dev;
-		}
-
-		INIT_WORK(
-			&msm8996_liquid_dock_dev->irq_work,
-			msm8996_liquid_docking_irq_work);
-	}
-	return 0;
-
-fail_switch_dev:
-	free_irq(msm8996_liquid_dock_dev->dock_plug_irq,
-				msm8996_liquid_dock_dev);
-fail_dock_gpio:
-	gpio_free(msm8996_liquid_dock_dev->dock_plug_gpio);
-exit:
-	kfree(msm8996_liquid_dock_dev);
-	msm8996_liquid_dock_dev = NULL;
-	return ret;
 }
 
 static void msm8996_ext_control(struct snd_soc_codec *codec)
@@ -5907,13 +5797,6 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		return err;
 	}
 
-	err = msm8996_liquid_init_docking();
-	if (err) {
-		pr_err("%s: 8996 init Docking stat IRQ failed (%d)\n",
-			__func__, err);
-		return err;
-	}
-
 	err = msm8996_ext_us_amp_init();
 	if (err) {
 		pr_err("%s: 8996 US Emitter GPIO init failed (%d)\n",
@@ -7228,6 +7111,7 @@ static struct snd_soc_dai_link msm8996_tdm_fe_dai_links[] = {
 		.platform_name = "msm-pcm-hostless",
 		.dynamic = 1,
 		.dpcm_playback = 1,
+		.dpcm_capture = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 				SND_SOC_DPCM_TRIGGER_POST},
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
@@ -7599,6 +7483,7 @@ static struct snd_soc_dai_link msm8996_tasha_fe_dai_links[] = {
 		.platform_name = "msm-pcm-hostless",
 		.dynamic = 1,
 		.dpcm_playback = 1,
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			    SND_SOC_DPCM_TRIGGER_POST},
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
@@ -7959,6 +7844,7 @@ static struct snd_soc_dai_link msm8996_tasha_be_dai_links[] = {
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "tasha_codec",
 		.codec_dai_name = "tasha_rx4",
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.be_id = MSM_BACKEND_DAI_SLIMBUS_6_RX,
@@ -8957,9 +8843,14 @@ static int msm8996_asoc_machine_probe(struct platform_device *pdev)
 	}
 
 	ret = msm8996_init_wsa_dev(pdev, card);
-#ifdef CONFIG_SND_SOC_WSA881X
-	if (ret)
-		goto err;
+#if defined CONFIG_MACH_ZUK_Z2_PLUS
+	if (ret){
+		if(wsa_dev_id == 0x21170214)
+			printk("msm8996_init_wsa_dev wsa_dev_id:%llx\n", wsa_dev_id);
+		else{
+			goto err;
+		}
+	}
 #endif
 
 	pdata->hph_en1_gpio = of_get_named_gpio(pdev->dev.of_node,
@@ -9105,19 +8996,6 @@ static int msm8996_asoc_machine_remove(struct platform_device *pdev)
 	gpio_free(pdata->hph_en1_gpio);
 	gpio_free(pdata->hph_en0_gpio);
 
-	if (msm8996_liquid_dock_dev != NULL) {
-		switch_dev_unregister(&msm8996_liquid_dock_dev->audio_sdev);
-
-		if (msm8996_liquid_dock_dev->dock_plug_irq)
-			free_irq(msm8996_liquid_dock_dev->dock_plug_irq,
-				 msm8996_liquid_dock_dev);
-
-		if (msm8996_liquid_dock_dev->dock_plug_gpio)
-			gpio_free(msm8996_liquid_dock_dev->dock_plug_gpio);
-
-		kfree(msm8996_liquid_dock_dev);
-		msm8996_liquid_dock_dev = NULL;
-	}
 	snd_soc_unregister_card(card);
 
 	return 0;

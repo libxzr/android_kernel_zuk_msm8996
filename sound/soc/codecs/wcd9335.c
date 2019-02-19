@@ -110,7 +110,7 @@
 /* Convert from vout ctl to micbias voltage in mV */
 #define WCD_VOUT_CTL_TO_MICB(v) (1000 + v * 50)
 
-#define TASHA_ZDET_NUM_MEASUREMENTS 150
+#define TASHA_ZDET_NUM_MEASUREMENTS 900
 #define TASHA_MBHC_GET_C1(c)  ((c & 0xC000) >> 14)
 #define TASHA_MBHC_GET_X1(x)  (x & 0x3FFF)
 /* z value compared in milliOhm */
@@ -4357,8 +4357,7 @@ static int tasha_codec_enable_spk_anc(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		ret = tasha_codec_enable_anc(w, kcontrol, event);
-		queue_delayed_work(system_power_efficient_wq,
-				      &tasha->spk_anc_dwork.dwork,
+		schedule_delayed_work(&tasha->spk_anc_dwork.dwork,
 				      msecs_to_jiffies(spk_anc_en_delay));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -5950,12 +5949,11 @@ static int tasha_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x00);
 		/* schedule work queue to Remove Mute */
-		queue_delayed_work(system_power_efficient_wq,
-				      &tasha->tx_mute_dwork[decimator].dwork,
+		schedule_delayed_work(&tasha->tx_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(tx_unmute_delay));
 		if (tasha->tx_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ)
-			queue_delayed_work(system_power_efficient_wq,
+			schedule_delayed_work(
 					&tasha->tx_hpf_work[decimator].dwork,
 					msecs_to_jiffies(300));
 		/* apply gain after decimator is enabled */
@@ -12152,9 +12150,8 @@ static int tasha_dig_core_power_collapse(struct tasha_priv *tasha,
 
 	if (req_state == POWER_COLLAPSE) {
 		if (tasha->power_active_ref == 0) {
-			queue_delayed_work(system_power_efficient_wq,
-					&tasha->power_gate_work,
-					msecs_to_jiffies(dig_core_collapse_timer * 1000));
+			schedule_delayed_work(&tasha->power_gate_work,
+			msecs_to_jiffies(dig_core_collapse_timer * 1000));
 		}
 	} else if (req_state == POWER_RESUME) {
 		if (tasha->power_active_ref == 1) {
@@ -14257,7 +14254,7 @@ static void tasha_add_child_devices(struct work_struct *work)
 
 	platdata = &tasha->swr_plat_data;
 
-	for_each_child_of_node(wcd9xxx->dev->of_node, node) {
+	for_each_available_child_of_node(wcd9xxx->dev->of_node, node) {
 		if (!strcmp(node->name, "swr_master"))
 			strlcpy(plat_dev_name, "tasha_swr_ctrl",
 				(WCD9335_STRING_LEN - 1));
