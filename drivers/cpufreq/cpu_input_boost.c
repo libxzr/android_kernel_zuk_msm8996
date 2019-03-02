@@ -221,6 +221,8 @@ static int cpu_notifier_cb(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
+extern int resume_cpufreq_underclock(void);
+
 static int fb_notifier_cb(struct notifier_block *nb,
 	unsigned long action, void *data)
 {
@@ -234,6 +236,7 @@ static int fb_notifier_cb(struct notifier_block *nb,
 
 	/* Boost when the screen turns on and unboost when it turns off */
 	if (*blank == FB_BLANK_UNBLANK) {
+		resume_cpufreq_underclock();
 		set_boost_bit(b, SCREEN_AWAKE);
 	#if CONFIG_BOOST_CONTROL
 		__cpu_input_boost_kick_max(b, wake_boost_duration);
