@@ -2918,6 +2918,9 @@ static struct attribute_group mdss_dsi_fs_attrs_group = {
 	.attrs = dynamic_bitclk_fs_attrs,
 };
 
+extern int trigger_cpufreq_underclock(void);
+extern int resume_cpufreq_underclock(void);
+
 static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 				  int event, void *arg)
 {
@@ -2978,6 +2981,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		#ifdef CONFIG_STATE_NOTIFIER
 		state_resume();
 		#endif
+		resume_cpufreq_underclock();
 		break;
 	case MDSS_EVENT_BLANK:
 		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL);
@@ -2995,6 +2999,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		#ifdef CONFIG_STATE_NOTIFIER
 		state_suspend();
 		#endif
+		trigger_cpufreq_underclock();
 		break;
 	case MDSS_EVENT_DISABLE_PANEL:
 		/* disable esd thread */
