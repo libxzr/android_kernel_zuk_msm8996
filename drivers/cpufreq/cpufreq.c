@@ -2456,14 +2456,21 @@ static struct notifier_block __refdata cpufreq_cpu_notifier = {
 
 static int cluster_0[2] = {0,1};
 static int cluster_1[2] = {2,3};
+static int cluster_2[0] = {};
+
 static int cluster_0_ucfreq=CONFIG_CPU_UNDERCLOCK_FREQ_LP;
 static int cluster_1_ucfreq=CONFIG_CPU_UNDERCLOCK_FREQ_HP;
+static int cluster_2_ucfreq=CONFIG_CPU_UNDERCLOCK_FREQ_HHP;
+
 static int cluster_0_lastfreq;
 static int cluster_1_lastfreq;
+static int cluster_2_lastfreq;
+
 static bool underclocked;
 
 module_param_named(cluster_0_ucfreq, cluster_0_ucfreq, int, 0644);
 module_param_named(cluster_1_ucfreq, cluster_1_ucfreq, int, 0644);
+module_param_named(cluster_2_ucfreq, cluster_2_ucfreq, int, 0644);
 
 
 static inline int cpufreq_underclock_check_cluster(int cpu)
@@ -2473,15 +2480,22 @@ static inline int cpufreq_underclock_check_cluster(int cpu)
 	//LP
 	length = sizeof(cluster_0)/sizeof(int);
 	for (i=0;i<length;i++){
-	if (cluster_0[i] == cpu)
+	if (cluster_0[i] == cpu && cluster_0_ucfreq!=0)
 		return 0;
 	}
 	
 	//HP
 	length = sizeof(cluster_1)/sizeof(int);
 	for (i=0;i<length;i++){
-	if (cluster_1[i] == cpu)
+	if (cluster_1[i] == cpu && cluster_1_ucfreq!=0)
 		return 1;
+	}
+
+	//HHP
+	length = sizeof(cluster_2)/sizeof(int);
+	for (i=0;i<length;i++){
+	if (cluster_2[i] == cpu && cluster_2_ucfreq!=0)
+		return 2;
 	}
 	
 	return -EINVAL;
@@ -2489,9 +2503,6 @@ static inline int cpufreq_underclock_check_cluster(int cpu)
 static inline void cpufreq_underclock_set(int cluster,struct cpufreq_policy *policy,bool underclock)
 {
 	if (underclock){
-		if(cluster_0_ucfreq == 0 || cluster_1_ucfreq == 0 ||underclocked)
-			return;
-
 		switch(cluster){
 			case 0:
 				cluster_0_lastfreq=policy->max;
@@ -2503,12 +2514,14 @@ static inline void cpufreq_underclock_set(int cluster,struct cpufreq_policy *pol
 				policy->max=cluster_1_ucfreq;
 				pr_info("Underclocked cluster1 to %d \n",cluster_1_ucfreq);
 				break;
+			case 2:
+				cluster_2_lastfreq=policy->max;
+				policy->max=cluster_2_ucfreq;
+				pr_info("Underclocked cluster2 to %d \n",cluster_2_ucfreq);
+				break;
 		}
 	}
 	else{
-		if(cluster_0_lastfreq == 0 || cluster_1_lastfreq == 0 ||!underclocked)
-			return;
-
 		switch(cluster){
 			case 0:
 				policy->max=cluster_0_lastfreq;
@@ -2518,6 +2531,10 @@ static inline void cpufreq_underclock_set(int cluster,struct cpufreq_policy *pol
 				policy->max=cluster_1_lastfreq;
 				pr_info("Resumed cluster1 to %d \n",cluster_1_lastfreq);
 				break;
+			case 2:
+				policy->max=cluster_2_lastfreq;
+				pr_info("Resumed cluster2 to %d \n",cluster_2_lastfreq);
+				break;
 		}
 	}
 
@@ -2526,6 +2543,10 @@ static inline void cpufreq_underclock_set(int cluster,struct cpufreq_policy *pol
 int trigger_cpufreq_underclock(void)
 {
 	struct cpufreq_policy *policy;
+
+	if(underclocked)
+		return 1;
+
 	pr_info("Triggered cpu underclock\n");
 	for_each_policy(policy) {
 		cpufreq_underclock_set(cpufreq_underclock_check_cluster(policy->cpu),policy,true);
@@ -2540,6 +2561,10 @@ int trigger_cpufreq_underclock(void)
 int resume_cpufreq_underclock(void)
 {
 	struct cpufreq_policy *policy;
+
+	if(!underclocked)
+		return 1;
+
 	pr_info("Resumed cpu underclock\n");
 	for_each_policy(policy) {
 		cpufreq_underclock_set(cpufreq_underclock_check_cluster(policy->cpu),policy,false);
