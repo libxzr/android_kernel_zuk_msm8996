@@ -2919,6 +2919,9 @@ static struct attribute_group mdss_dsi_fs_attrs_group = {
 	.attrs = dynamic_bitclk_fs_attrs,
 };
 
+extern int trigger_cpufreq_underclock(void);
+extern int resume_cpufreq_underclock(void);
+
 static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 				  int event, void *arg)
 {
@@ -2974,6 +2977,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		if (ctrl_pdata->on_cmds.link_state == DSI_HS_MODE)
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
+		resume_cpufreq_underclock();
 		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;
@@ -2986,6 +2990,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)
 			rc = mdss_dsi_blank(pdata, power_state);
 		rc = mdss_dsi_off(pdata, power_state);
+		trigger_cpufreq_underclock();
 		break;
 	case MDSS_EVENT_DISABLE_PANEL:
 		/* disable esd thread */
