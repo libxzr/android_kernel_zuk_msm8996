@@ -242,6 +242,18 @@ config CPU_FREQ_GOV_SCHEDUTIL
 
 	  If in doubt, say N.
 
+config CPU_UNDERCLOCK_FREQ_HP
+	int "Performance cluster underclock freq"
+	default "0"
+	help
+	  CPU underclock frequency for the performance CPU cluster.
+
+config CPU_UNDERCLOCK_FREQ_LP
+	int "Low-power cluster underclock freq"
+	default "0"
+	help
+	  CPU underclock frequency for the low-power CPU cluster.
+
 config CPU_INPUT_BOOST
 	bool "CPU Input Boost"
 	help
