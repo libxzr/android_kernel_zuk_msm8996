@@ -146,13 +146,13 @@ static void input_boost_worker(struct work_struct *work)
 	do_stune_boost("top-app", dynamic_stune_boost);
 #endif
 	queue_delayed_work(b->wq, &b->input_unboost,
-		msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS));
+			   msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS));
 }
 
 static void input_unboost_worker(struct work_struct *work)
 {
-	struct boost_drv *b =
-		container_of(to_delayed_work(work), typeof(*b), input_unboost);
+	struct boost_drv *b = container_of(to_delayed_work(work),
+					   typeof(*b), input_unboost);
 
 	clear_boost_bit(b, INPUT_BOOST);
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
@@ -179,8 +179,8 @@ static void max_boost_worker(struct work_struct *work)
 
 static void max_unboost_worker(struct work_struct *work)
 {
-	struct boost_drv *b =
-		container_of(to_delayed_work(work), typeof(*b), max_unboost);
+	struct boost_drv *b = container_of(to_delayed_work(work),
+					   typeof(*b), max_unboost);
 
 	clear_boost_bit(b, WAKE_BOOST | MAX_BOOST);
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
@@ -386,7 +386,6 @@ static int __init cpu_input_boost_init(void)
 		goto unregister_handler;
 	}
 
-	/* Allow global boost config access for external boosts */
 	boost_drv_g = b;
 
 	return 0;
