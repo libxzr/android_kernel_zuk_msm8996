@@ -4563,6 +4563,17 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 	t_cached_result = cached_result;
 	t_scan_id_grp = &t_cached_result->result[0];
 
+	if ((t_cached_result->num_scan_ids *
+	    MIN(t_scan_id_grp->num_results,
+		param_buf->num_bssid_list)) > param_buf->num_bssid_list) {
+		WMA_LOGE("%s:num_scan_ids %d, num_results %d num_bssid_list %d",
+			 __func__,
+			 t_cached_result->num_scan_ids,
+			 t_scan_id_grp->num_results,
+			 param_buf->num_bssid_list);
+		return -EINVAL;
+	}
+
 	WMA_LOGD("%s: num_scan_ids:%d", __func__,
 			t_cached_result->num_scan_ids);
 	for (i = 0; i < t_cached_result->num_scan_ids; i++) {
@@ -21325,8 +21336,8 @@ static void wma_set_max_tx_power(WMA_HANDLE handle,
 	}
 
 	if (wma_handle->interfaces[vdev_id].max_tx_power == tx_pwr_params->power) {
-		ret = 0;
-		goto end;
+		WMA_LOGI("Set MAX TX pwr limit equal to current used %d",
+			wma_handle->interfaces[vdev_id].max_tx_power);
 	}
 	prev_max_power = wma_handle->interfaces[vdev_id].max_tx_power;
 	wma_handle->interfaces[vdev_id].max_tx_power = tx_pwr_params->power;
@@ -37087,10 +37098,14 @@ static int wma_vdev_tsf_handler(void *handle, uint8_t *data,
 	ptsf->vdev_id = tsf_event->vdev_id;
 	ptsf->tsf_low = tsf_event->tsf_low;
 	ptsf->tsf_high = tsf_event->tsf_high;
+	ptsf->tsf_id = tsf_event->tsf_id;
+	ptsf->tsf_id_valid = tsf_event->tsf_id_valid;
 
 	WMA_LOGD("%s: receive WMI_VDEV_TSF_REPORT_EVENTID ", __func__);
 	WMA_LOGD("%s: vdev_id = %u,tsf_low =%u, tsf_high = %u", __func__,
 			 ptsf->vdev_id, ptsf->tsf_low, ptsf->tsf_high);
+	WMA_LOGD("%s: vdev_id = %u,tsf_id =%u, tsf_id_valid = %u", __func__,
+			 ptsf->vdev_id, ptsf->tsf_id, ptsf->tsf_id_valid);
 
 	vos_msg.type = eWNI_SME_TSF_EVENT;
 	vos_msg.bodyptr = ptsf;

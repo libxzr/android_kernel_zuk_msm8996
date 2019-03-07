@@ -112,6 +112,7 @@
 #include "csrApi.h"
 
 #include "wmi_unified_priv.h"
+#include "limSessionUtils.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -6647,8 +6648,34 @@ static int __wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	/* period==0. Just disable mac counter */
 	if (thresh.period == 0) {
 		hddLog(VOS_TRACE_LEVEL_INFO,
-		       FL("Mac counter will be disaabled"));
+		       FL("Mac counter will be disabled, reset max_sap_peers"));
+		if (ccmCfgSetInt(hdd_ctx->hHal, WNI_CFG_ASSOC_STA_LIMIT_AP,
+				 hdd_ctx->cfg_ini->max_sap_peers, NULL,
+				 eANI_BOOLEAN_FALSE)
+		    == eHAL_STATUS_FAILURE)
+			hddLog(LOGE, "can't pass WNI_CFG_ASSOC_STA_LIMIT_AP to CCM");
 		goto set_param;
+	} else {
+#define MAC_COUNTER_MAX_PEER 2
+		tpAniSirGlobal mac = (tpAniSirGlobal)hdd_ctx->hHal;
+		uint32_t cur_peer_num = peGetCurrentSTAsCount(mac);
+		if (cur_peer_num > MAC_COUNTER_MAX_PEER) {
+			hddLog(LOGE, ("MAC counter can only support %d peers, current peer number is %d"),
+			       MAC_COUNTER_MAX_PEER, cur_peer_num);
+			return -ENOMEM;
+		}
+
+		if (ccmCfgSetInt(hdd_ctx->hHal, WNI_CFG_ASSOC_STA_LIMIT_AP,
+				 MAC_COUNTER_MAX_PEER, NULL, eANI_BOOLEAN_FALSE)
+			== eHAL_STATUS_FAILURE)
+			hddLog(LOGE,"can't pass WNI_CFG_ASSOC_STA_LIMIT_AP to CCM");
+		else
+			hddLog(VOS_TRACE_LEVEL_INFO,
+			       FL("limit MAX peer count to %d"),
+			          MAC_COUNTER_MAX_PEER);
+
+		hddLog(VOS_TRACE_LEVEL_INFO,
+		       FL("MAC counter enabled"));
 	}
 
 	/* global thresh is not enabled */
@@ -14145,12 +14172,14 @@ static int hdd_convert_auth_type(uint32_t auth_type)
 	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
 		ret_val = QCA_WLAN_AUTH_TYPE_WAI_PSK;
 		break;
+#ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
 		ret_val = QCA_WLAN_AUTH_TYPE_SHA256_PSK;
 		break;
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
 		ret_val = QCA_WLAN_AUTH_TYPE_SHA256;
 		break;
+#endif
 	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
 	case eCSR_AUTH_TYPE_FAILED:
 	case eCSR_AUTH_TYPE_NONE:
