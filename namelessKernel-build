@@ -205,7 +205,7 @@ case ${device} in
 	build_z2_row;;
 
 	"all")
-	build_z2_plus&&build_z2_row;;
+	build_z2_row&&build_z2_plus;;
 
 	*)
 
