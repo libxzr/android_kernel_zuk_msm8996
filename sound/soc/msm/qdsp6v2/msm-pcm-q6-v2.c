@@ -1101,7 +1101,6 @@ static struct snd_pcm_ops msm_pcm_ops = {
 static int msm_pcm_adsp_stream_cmd_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	u64 fe_id = kcontrol->private_value;
 	struct snd_soc_component *pcm = snd_kcontrol_chip(kcontrol);
 	struct snd_soc_platform *platform = snd_soc_component_to_platform(pcm);
 	struct msm_plat_data *pdata = dev_get_drvdata(platform->dev);
@@ -1117,7 +1116,7 @@ static int msm_pcm_adsp_stream_cmd_put(struct snd_kcontrol *kcontrol,
 		goto done;
 	}
 
-	substream = pdata->pcm_device[fe_id]->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
+	substream = pdata->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
 	if (!substream) {
 		pr_err("%s substream not found\n", __func__);
 		ret = -EINVAL;

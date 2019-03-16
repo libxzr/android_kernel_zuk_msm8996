@@ -77,7 +77,6 @@ size_t get_cal_info_size(int32_t cal_type)
 		size = sizeof(struct audio_cal_info_audstrm);
 		break;
 	case AFE_TOPOLOGY_CAL_TYPE:
-	case AFE_LSM_TOPOLOGY_CAL_TYPE:
 		size = sizeof(struct audio_cal_info_afe_top);
 		break;
 	case AFE_CUST_TOPOLOGY_CAL_TYPE:
@@ -87,7 +86,6 @@ size_t get_cal_info_size(int32_t cal_type)
 		size = sizeof(struct audio_cal_info_afe);
 		break;
 	case AFE_COMMON_TX_CAL_TYPE:
-	case AFE_LSM_TX_CAL_TYPE:
 		size = sizeof(struct audio_cal_info_afe);
 		break;
 	case AFE_FB_SPKR_PROT_CAL_TYPE:
@@ -225,7 +223,6 @@ size_t get_user_cal_type_size(int32_t cal_type)
 		size = sizeof(struct audio_cal_type_audstrm);
 		break;
 	case AFE_TOPOLOGY_CAL_TYPE:
-	case AFE_LSM_TOPOLOGY_CAL_TYPE:
 		size = sizeof(struct audio_cal_type_afe_top);
 		break;
 	case AFE_CUST_TOPOLOGY_CAL_TYPE:
@@ -235,7 +232,6 @@ size_t get_user_cal_type_size(int32_t cal_type)
 		size = sizeof(struct audio_cal_type_afe);
 		break;
 	case AFE_COMMON_TX_CAL_TYPE:
-	case AFE_LSM_TX_CAL_TYPE:
 		size = sizeof(struct audio_cal_type_afe);
 		break;
 	case AFE_FB_SPKR_PROT_CAL_TYPE:
