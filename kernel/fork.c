@@ -81,7 +81,6 @@
 #include <linux/cpufreq_times.h>
 #include <linux/cpufreq.h>
 #include <linux/cpu_input_boost.h>
-#include <linux/devfreq_boost.h>
 #include <linux/boost_control.h>
 
 #include <asm/pgtable.h>
@@ -1793,7 +1792,6 @@ long _do_fork(unsigned long clone_flags,
 
 	if (app_launch_boost_ms && is_zygote_pid(current->pid)) {
 		cpu_input_boost_kick_max(app_launch_boost_ms);
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, app_launch_boost_ms);
 	}
 
 	/*
