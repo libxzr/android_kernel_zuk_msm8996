@@ -1803,13 +1803,12 @@ static int cnss_wlan_pci_resume(struct device *dev)
 		goto out;
 
 	if (wdriver->resume && !penv->pcie_link_down_ind) {
-		if (penv->saved_state)
-			cnss_pci_load_and_free_saved_state(
-				pdev, &penv->saved_state);
 		pci_restore_state(pdev);
-
 		ret = wdriver->resume(pdev);
 	}
+
+	if (penv->saved_state)
+		cnss_pci_load_and_free_saved_state(pdev, &penv->saved_state);
 
 out:
 	return ret;
