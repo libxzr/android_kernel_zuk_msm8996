@@ -746,7 +746,17 @@ static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long e
 	if (ev_data && ev_data->data && event == FB_EVENT_BLANK) {
 		blank = ev_data->data;
 		cancel_work_sync(&pm_work);
-		screen_off = *blank != FB_BLANK_UNBLANK;
+		switch (*blank) {
+			case FB_BLANK_UNBLANK:
+				screen_off = false;
+				break;
+			case FB_BLANK_POWERDOWN:
+				screen_off = true;
+				break;
+			default:
+				return 0;
+		}
+
 		schedule_work(&pm_work);
 	}
 
