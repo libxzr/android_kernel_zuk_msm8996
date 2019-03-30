@@ -472,7 +472,9 @@ static s32 gt1x_request_irq(void)
 	GTP_DEBUG_FUNC();
 	GTP_DEBUG("INT trigger type:%x", gt1x_int_type);
 
-	ret = request_irq(gt1x_i2c_client->irq, gt1x_ts_irq_handler, irq_table[gt1x_int_type], gt1x_i2c_client->name, gt1x_i2c_client);
+	ret = request_irq(gt1x_i2c_client->irq, gt1x_ts_irq_handler,
+					  irq_table[gt1x_int_type] | IRQF_PERF_CRITICAL,
+					  gt1x_i2c_client->name, gt1x_i2c_client);
 	if (ret) {
 		GTP_ERROR("Request IRQ failed!ERRNO:%d.", ret);
 		GTP_GPIO_AS_INPUT(GTP_INT_PORT);

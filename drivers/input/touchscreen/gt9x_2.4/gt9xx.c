@@ -335,7 +335,7 @@ void gtp_irq_request(struct goodix_ts_data *ts)
 	{
 		ret  = request_irq(ts->client->irq, 
 					goodix_ts_irq_handler,
-					irq_table[ts->int_trigger_type],
+					irq_table[ts->int_trigger_type] | IRQF_PERF_CRITICAL,
 					ts->client->name,
 					ts);
 		ts->irq_is_disable = 0; 
