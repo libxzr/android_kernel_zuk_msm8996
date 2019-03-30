@@ -193,19 +193,6 @@ static struct input_handler *handler;
 
 static int set_num_clusters(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-	if (num_clusters)
-		return -EINVAL;
-
-	num_clusters = val;
-
-	if (init_cluster_control()) {
-		num_clusters = 0;
-		return -ENOMEM;
-	}
 
 	return 0;
 }
@@ -223,36 +210,6 @@ device_param_cb(num_clusters, &param_ops_num_clusters, NULL, 0644);
 
 static int set_max_cpus(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int i, ntokens = 0;
-	const char *cp = buf;
-	int val;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%d\n", &val) != 1)
-			return -EINVAL;
-		if (val > (int)cpumask_weight(managed_clusters[i]->cpus))
-			return -EINVAL;
-
-		managed_clusters[i]->max_cpu_request = val;
-
-		cp = strnchr(cp, strlen(cp), ':');
-		cp++;
-		trace_set_max_cpus(cpumask_bits(managed_clusters[i]->cpus)[0],
-								val);
-	}
-
-	schedule_delayed_work(&evaluate_hotplug_work, 0);
 
 	return 0;
 }
@@ -283,28 +240,8 @@ device_param_cb(max_cpus, &param_ops_max_cpus, NULL, 0644);
 
 static int set_managed_cpus(const char *buf, const struct kernel_param *kp)
 {
-	int i, ret;
-	struct cpumask tmp_mask;
 
-	if (!clusters_inited)
-		return -EINVAL;
-
-	ret = cpulist_parse(buf, &tmp_mask);
-
-	if (ret)
-		return ret;
-
-	for (i = 0; i < num_clusters; i++) {
-		if (cpumask_empty(managed_clusters[i]->cpus)) {
-			mutex_lock(&managed_cpus_lock);
-			cpumask_copy(managed_clusters[i]->cpus, &tmp_mask);
-			cpumask_clear(managed_clusters[i]->offlined_cpus);
-			mutex_unlock(&managed_cpus_lock);
-			break;
-		}
-	}
-
-	return ret;
+	return 0;
 }
 
 static int get_managed_cpus(char *buf, const struct kernel_param *kp)
@@ -397,61 +334,6 @@ device_param_cb(managed_online_cpus, &param_ops_managed_online_cpus,
  */
 static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 {
-	int i, j, ntokens = 0;
-	unsigned int val, cpu;
-	const char *cp = buf;
-	struct cpu_status *i_cpu_stats;
-	struct cpufreq_policy policy;
-	cpumask_var_t limit_mask;
-	int ret;
-
-	while ((cp = strpbrk(cp + 1, " :")))
-		ntokens++;
-
-	/* CPU:value pair */
-	if (!(ntokens % 2))
-		return -EINVAL;
-
-	cp = buf;
-	cpumask_clear(limit_mask);
-	for (i = 0; i < ntokens; i += 2) {
-		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
-			return -EINVAL;
-		if (cpu > (num_present_cpus() - 1))
-			return -EINVAL;
-
-		i_cpu_stats = &per_cpu(cpu_stats, cpu);
-
-		i_cpu_stats->min = val;
-		cpumask_set_cpu(cpu, limit_mask);
-
-		cp = strnchr(cp, strlen(cp), ' ');
-		cp++;
-	}
-
-	/*
-	 * Since on synchronous systems policy is shared amongst multiple
-	 * CPUs only one CPU needs to be updated for the limit to be
-	 * reflected for the entire cluster. We can avoid updating the policy
-	 * of other CPUs in the cluster once it is done for at least one CPU
-	 * in the cluster
-	 */
-	get_online_cpus();
-	for_each_cpu(i, limit_mask) {
-		i_cpu_stats = &per_cpu(cpu_stats, i);
-
-		if (cpufreq_get_policy(&policy, i))
-			continue;
-
-		if (cpu_online(i) && (policy.min != i_cpu_stats->min)) {
-			ret = cpufreq_update_policy(i);
-			if (ret)
-				continue;
-		}
-		for_each_cpu(j, policy.related_cpus)
-			cpumask_clear_cpu(j, limit_mask);
-	}
-	put_online_cpus();
 
 	return 0;
 }
@@ -480,53 +362,6 @@ module_param_cb(cpu_min_freq, &param_ops_cpu_min_freq, NULL, 0644);
  */
 static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 {
-	int i, j, ntokens = 0;
-	unsigned int val, cpu;
-	const char *cp = buf;
-	struct cpu_status *i_cpu_stats;
-	struct cpufreq_policy policy;
-	cpumask_var_t limit_mask;
-	int ret;
-
-	while ((cp = strpbrk(cp + 1, " :")))
-		ntokens++;
-
-	/* CPU:value pair */
-	if (!(ntokens % 2))
-		return -EINVAL;
-
-	cp = buf;
-	cpumask_clear(limit_mask);
-	for (i = 0; i < ntokens; i += 2) {
-		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
-			return -EINVAL;
-		if (cpu > (num_present_cpus() - 1))
-			return -EINVAL;
-
-		i_cpu_stats = &per_cpu(cpu_stats, cpu);
-
-		i_cpu_stats->max = val;
-		cpumask_set_cpu(cpu, limit_mask);
-
-		cp = strnchr(cp, strlen(cp), ' ');
-		cp++;
-	}
-
-	get_online_cpus();
-	for_each_cpu(i, limit_mask) {
-		i_cpu_stats = &per_cpu(cpu_stats, i);
-		if (cpufreq_get_policy(&policy, i))
-			continue;
-
-		if (cpu_online(i) && (policy.max != i_cpu_stats->max)) {
-			ret = cpufreq_update_policy(i);
-			if (ret)
-				continue;
-		}
-		for_each_cpu(j, policy.related_cpus)
-			cpumask_clear_cpu(j, limit_mask);
-	}
-	put_online_cpus();
 
 	return 0;
 }
@@ -552,12 +387,6 @@ module_param_cb(cpu_max_freq, &param_ops_cpu_max_freq, NULL, 0644);
 static int set_ip_evt_trigger_threshold(const char *buf,
 		const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	thr.ip_evt_threshold = val;
 	return 0;
 }
 
@@ -577,12 +406,6 @@ device_param_cb(ip_evt_trig_thr, &param_ops_ip_evt_trig_thr, NULL, 0644);
 static int set_perf_cl_trigger_threshold(const char *buf,
 		 const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	thr.perf_cl_trigger_threshold = val;
 	return 0;
 }
 
@@ -602,12 +425,6 @@ device_param_cb(perf_cl_trig_thr, &param_ops_perf_trig_thr, NULL, 0644);
 static int set_pwr_cl_trigger_threshold(const char *buf,
 		const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	thr.pwr_cl_trigger_threshold = val;
 	return 0;
 }
 
@@ -650,34 +467,6 @@ static int input_events_greater_than_threshold(void)
 }
 static int set_single_enter_load(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val < managed_clusters[i]->single_exit_load)
-			return -EINVAL;
-
-		managed_clusters[i]->single_enter_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -705,34 +494,6 @@ device_param_cb(single_enter_load, &param_ops_single_enter_load, NULL, 0644);
 
 static int set_single_exit_load(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val > managed_clusters[i]->single_enter_load)
-			return -EINVAL;
-
-		managed_clusters[i]->single_exit_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -761,34 +522,6 @@ device_param_cb(single_exit_load, &param_ops_single_exit_load, NULL, 0644);
 static int set_pcpu_multi_enter_load(const char *buf,
 					const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val < managed_clusters[i]->pcpu_multi_exit_load)
-			return -EINVAL;
-
-		managed_clusters[i]->pcpu_multi_enter_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -818,34 +551,6 @@ device_param_cb(pcpu_multi_enter_load, &param_ops_pcpu_multi_enter_load,
 static int set_pcpu_multi_exit_load(const char *buf,
 						const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val > managed_clusters[i]->pcpu_multi_enter_load)
-			return -EINVAL;
-
-		managed_clusters[i]->pcpu_multi_exit_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -874,34 +579,6 @@ device_param_cb(pcpu_multi_exit_load, &param_ops_pcpu_multi_exit_load,
 static int set_perf_cl_peak_enter_load(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val < managed_clusters[i]->perf_cl_peak_exit_load)
-			return -EINVAL;
-
-		managed_clusters[i]->perf_cl_peak_enter_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -932,34 +609,6 @@ device_param_cb(perf_cl_peak_enter_load, &param_ops_perf_cl_peak_enter_load,
 static int set_perf_cl_peak_exit_load(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		if (val > managed_clusters[i]->perf_cl_peak_enter_load)
-			return -EINVAL;
-
-		managed_clusters[i]->perf_cl_peak_exit_load = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -990,31 +639,6 @@ device_param_cb(perf_cl_peak_exit_load, &param_ops_perf_cl_peak_exit_load,
 static int set_perf_cl_peak_enter_cycles(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->perf_cl_peak_enter_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -1046,31 +670,6 @@ device_param_cb(perf_cl_peak_enter_cycles, &param_ops_perf_cl_peak_enter_cycles,
 static int set_perf_cl_peak_exit_cycles(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->perf_cl_peak_exit_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -1102,32 +701,6 @@ device_param_cb(perf_cl_peak_exit_cycles, &param_ops_perf_cl_peak_exit_cycles,
 static int set_single_enter_cycles(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->single_enter_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
-
 	return 0;
 }
 
@@ -1157,31 +730,6 @@ device_param_cb(single_enter_cycles, &param_ops_single_enter_cycles,
 static int set_single_exit_cycles(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->single_exit_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -1210,31 +758,6 @@ device_param_cb(single_exit_cycles, &param_ops_single_exit_cycles, NULL, 0644);
 static int set_multi_enter_cycles(const char *buf,
 				const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->multi_enter_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -1262,31 +785,6 @@ device_param_cb(multi_enter_cycles, &param_ops_multi_enter_cycles, NULL, 0644);
 
 static int set_multi_exit_cycles(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val, i, ntokens = 0;
-	const char *cp = buf;
-	unsigned int bytes_left;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	while ((cp = strpbrk(cp + 1, ":")))
-		ntokens++;
-
-	if (ntokens != (num_clusters - 1))
-		return -EINVAL;
-
-	cp = buf;
-	for (i = 0; i < num_clusters; i++) {
-
-		if (sscanf(cp, "%u\n", &val) != 1)
-			return -EINVAL;
-
-		managed_clusters[i]->multi_exit_cycles = val;
-
-		bytes_left = PAGE_SIZE - (cp - buf);
-		cp = strnchr(cp, bytes_left, ':');
-		cp++;
-	}
 
 	return 0;
 }
@@ -1314,12 +812,6 @@ device_param_cb(multi_exit_cycles, &param_ops_multi_exit_cycles, NULL, 0644);
 
 static int set_io_enter_cycles(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	io_enter_cycles = val;
 
 	return 0;
 }
@@ -1337,12 +829,6 @@ device_param_cb(io_enter_cycles, &param_ops_io_enter_cycles, NULL, 0644);
 
 static int set_io_exit_cycles(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	io_exit_cycles = val;
 
 	return 0;
 }
@@ -1360,14 +846,6 @@ device_param_cb(io_exit_cycles, &param_ops_io_exit_cycles, NULL, 0644);
 
 static int set_iowait_floor_pct(const char *buf, const struct kernel_param *kp)
 {
-	u64 val;
-
-	if (sscanf(buf, "%llu\n", &val) != 1)
-		return -EINVAL;
-	if (val > iowait_ceiling_pct)
-		return -EINVAL;
-
-	iowait_floor_pct = val;
 
 	return 0;
 }
@@ -1386,14 +864,6 @@ device_param_cb(iowait_floor_pct, &param_ops_iowait_floor_pct, NULL, 0644);
 static int set_iowait_ceiling_pct(const char *buf,
 						const struct kernel_param *kp)
 {
-	u64 val;
-
-	if (sscanf(buf, "%llu\n", &val) != 1)
-		return -EINVAL;
-	if (val < iowait_floor_pct)
-		return -EINVAL;
-
-	iowait_ceiling_pct = val;
 
 	return 0;
 }
@@ -1411,57 +881,6 @@ device_param_cb(iowait_ceiling_pct, &param_ops_iowait_ceiling_pct, NULL, 0644);
 
 static int set_workload_detect(const char *buf, const struct kernel_param *kp)
 {
-	unsigned int val, i;
-	struct cluster *i_cl;
-	unsigned long flags;
-
-	if (!clusters_inited)
-		return -EINVAL;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	if (val == workload_detect)
-		return 0;
-
-	workload_detect = val;
-	if (!(workload_detect & IO_DETECT)) {
-		for (i = 0; i < num_clusters; i++) {
-			i_cl = managed_clusters[i];
-			spin_lock_irqsave(&i_cl->iowait_lock, flags);
-			i_cl->iowait_enter_cycle_cnt = 0;
-			i_cl->iowait_exit_cycle_cnt = 0;
-			i_cl->cur_io_busy = 0;
-			i_cl->io_change = true;
-			spin_unlock_irqrestore(&i_cl->iowait_lock, flags);
-		}
-	}
-	if (!(workload_detect & MODE_DETECT)) {
-		for (i = 0; i < num_clusters; i++) {
-			i_cl = managed_clusters[i];
-			spin_lock_irqsave(&i_cl->mode_lock, flags);
-			i_cl->single_enter_cycle_cnt = 0;
-			i_cl->single_exit_cycle_cnt = 0;
-			i_cl->multi_enter_cycle_cnt = 0;
-			i_cl->multi_exit_cycle_cnt = 0;
-			i_cl->mode = 0;
-			i_cl->mode_change = true;
-			spin_unlock_irqrestore(&i_cl->mode_lock, flags);
-		}
-	}
-
-	if (!(workload_detect & PERF_CL_PEAK_DETECT)) {
-		for (i = 0; i < num_clusters; i++) {
-			i_cl = managed_clusters[i];
-			spin_lock_irqsave(&i_cl->perf_cl_peak_lock, flags);
-			i_cl->perf_cl_peak_enter_cycle_cnt = 0;
-			i_cl->perf_cl_peak_exit_cycle_cnt = 0;
-			i_cl->perf_cl_peak = 0;
-			spin_unlock_irqrestore(&i_cl->perf_cl_peak_lock, flags);
-		}
-	}
-
-	wake_up_process(notify_thread);
 	return 0;
 }
 
@@ -1480,29 +899,6 @@ device_param_cb(workload_detect, &param_ops_workload_detect, NULL, 0644);
 static int set_input_evts_with_hi_slvt_detect(const char *buf,
 					const struct kernel_param *kp)
 {
-
-	unsigned int val;
-
-	if (sscanf(buf, "%u\n", &val) != 1)
-		return -EINVAL;
-
-	if (val == use_input_evts_with_hi_slvt_detect)
-		return 0;
-
-	use_input_evts_with_hi_slvt_detect = val;
-
-	if ((workload_detect & PERF_CL_PEAK_DETECT) &&
-		!input_events_handler_registered &&
-		use_input_evts_with_hi_slvt_detect) {
-		if (register_input_handler() == -ENOMEM) {
-			use_input_evts_with_hi_slvt_detect = 0;
-			return -ENOMEM;
-		}
-	} else if ((workload_detect & PERF_CL_PEAK_DETECT) &&
-				input_events_handler_registered &&
-				!use_input_evts_with_hi_slvt_detect) {
-		unregister_input_handler();
-	}
 	return 0;
 }
 
