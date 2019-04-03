@@ -1797,7 +1797,7 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-	if (app_launch_boost_ms && is_zygote_pid(current->pid)) {
+	if (app_launch_boost_ms && task_is_zygote(current)) {
 		cpu_input_boost_kick_max(app_launch_boost_ms);
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, app_launch_boost_ms);
     }
