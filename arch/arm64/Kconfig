@@ -99,7 +99,6 @@ config ARM64
 	select PERF_USE_VMALLOC
 	select POWER_RESET
 	select POWER_SUPPLY
-	select RTC_LIB
 	select SPARSE_IRQ
 	select SYSCTL_EXCEPTION_TRACE
 	select HAVE_CONTEXT_TRACKING
@@ -1254,6 +1253,9 @@ config CROSS_COMPILE_ARM32
 	help
 	  Same as setting CROSS_COMPILE_ARM32 in the environment, but saved for
 	  future builds. The environment variable overrides this config option.
+config KEYS_COMPAT
+	def_bool y
+	depends on COMPAT && KEYS
 
 endmenu
 
