@@ -43,6 +43,7 @@
 #include <linux/profile.h>
 #include <linux/notifier.h>
 #include <linux/cpu_input_boost.h>
+#include <linux/boost_control.h>
 
 #define CREATE_TRACE_POINTS
 #include "trace/lowmemorykiller.h"
@@ -167,7 +168,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		long cache_limit = minfree * (long)(PAGE_SIZE / 1024);
 		long free = other_free * (long)(PAGE_SIZE / 1024);
 
-		cpu_input_boost_kick_max(500);
+		cpu_input_boost_kick_max(lmk_boost_ms);
 		task_lock(selected);
 		send_sig(SIGKILL, selected, 0);
 		/*
