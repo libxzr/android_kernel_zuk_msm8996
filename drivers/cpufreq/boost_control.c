@@ -25,8 +25,8 @@ module_param_named(input_boost_freq_lp, input_boost_freq_lp, int, 0644);
 u32 wake_boost_duration=CONFIG_WAKE_BOOST_DURATION_MS;
 module_param_named(cpu_wake_boost_duration, wake_boost_duration, int, 0644);
 
-u32 cpubw_boost_freq=CONFIG_DEVFREQ_MSM_CPUBW_BOOST_FREQ;
-module_param_named(cpubw_boost_freq, cpubw_boost_freq, int, 0644);
+unsigned long cpubw_boost_freq=CONFIG_DEVFREQ_MSM_CPUBW_BOOST_FREQ;
+module_param_named(cpubw_boost_freq, cpubw_boost_freq, long, 0644);
 
 u32 cpubw_wake_boost_duration=CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS;
 module_param_named(cpubw_wake_boost_duration, cpubw_wake_boost_duration, int, 0644);
