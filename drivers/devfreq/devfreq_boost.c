@@ -9,6 +9,7 @@
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
+#include <linux/boost_control.h>
 
 enum {
 	SCREEN_OFF,
@@ -48,7 +49,11 @@ static void devfreq_max_unboost(struct work_struct *work);
 
 static struct df_boost_drv df_boost_drv_g __read_mostly = {
 	BOOST_DEV_INIT(df_boost_drv_g, DEVFREQ_MSM_CPUBW,
+	#if CONFIG_BOOST_CONTROL
+			cpubw_boost_freq)
+	#else
 		       CONFIG_DEVFREQ_MSM_CPUBW_BOOST_FREQ)
+	#endif
 };
 
 static void __devfreq_boost_kick(struct boost_dev *b)
@@ -192,7 +197,11 @@ static int fb_notifier_cb(struct notifier_block *nb, unsigned long action,
 		if (*blank == FB_BLANK_UNBLANK) {
 			clear_bit(SCREEN_OFF, &b->state);
 			__devfreq_boost_kick_max(b,
+		#if CONFIG_BOOST_CONTROL
+				cpubw_wake_boost_duration);
+		#else
 				CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS);
+		#endif
 		} else {
 			set_bit(SCREEN_OFF, &b->state);
 			wake_up(&b->boost_waitq);
