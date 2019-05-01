@@ -414,9 +414,6 @@ static int ovl_create_or_link(struct dentry *dentry, int mode, dev_t rdev,
 		err = ovl_create_over_whiteout(dentry, inode, &stat, link,
 					       hardlink);
 
-			err = ovl_create_over_whiteout(dentry, inode, &stat,
-						       link, hardlink);
-		}
 		ovl_revert_creds(old_cred);
 	}
 
