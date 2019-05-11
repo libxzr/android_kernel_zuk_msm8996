@@ -396,7 +396,6 @@ static void pd_locator_work(struct work_struct *work)
 								pd_loc_work);
 
 	data = pdqw->pdc;
-	data->domain_list = NULL;
 	rc = init_service_locator();
 	if (rc) {
 		pr_err("Unable to connect to service locator!, rc = %d\n", rc);
