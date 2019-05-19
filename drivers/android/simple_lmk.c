@@ -11,6 +11,8 @@
 #include <linux/oom.h>
 #include <linux/sort.h>
 #include <linux/vmpressure.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 /* The minimum number of pages to free per reclaim */
 #define MIN_FREE_PAGES (CONFIG_ANDROID_SIMPLE_LMK_MINFREE * SZ_1M / PAGE_SIZE)
@@ -213,6 +215,9 @@ static void scan_and_kill(unsigned long pages_needed)
 		pr_info("Killing %s with adj %d to free %lu KiB\n", vtsk->comm,
 			vtsk->signal->oom_score_adj,
 			victim->size << (PAGE_SHIFT - 10));
+			
+		cpu_input_boost_kick_max(500);
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,500);
 
 		/* Accelerate the victim's death by forcing the kill signal */
 		do_send_sig_info(SIGKILL, SEND_SIG_FORCED, vtsk, true);
