@@ -652,6 +652,14 @@ else
 KBUILD_CFLAGS   += -O3
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS	+= -mcpu=kryo -mtune=kryo
+KBUILD_CFLAGS	+= $(call cc-option, -mllvm -polly) \
+		   $(call cc-option, -mllvm -polly-run-dce) \
+		   $(call cc-option, -mllvm -polly-run-inliner) \
+		   $(call cc-option, -mllvm -polly-opt-fusion=max) \
+		   $(call cc-option, -mllvm -polly-ast-use-context) \
+		   $(call cc-option, -mllvm -polly-detect-keep-going) \
+		   $(call cc-option, -mllvm -polly-vectorizer=stripmine) \
+		   $(call cc-option, -mllvm -polly-invariant-load-hoisting)
 endif
 endif
 
