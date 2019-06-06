@@ -16,16 +16,28 @@
 #include <linux/init.h>
 #include <linux/module.h>
 
+bool booted;
+module_param_named(booted, booted, bool, 0644);
 static int cpufreq_governor_performance(struct cpufreq_policy *policy,
 					unsigned int event)
 {
 	switch (event) {
 	case CPUFREQ_GOV_START:
 	case CPUFREQ_GOV_LIMITS:
-		pr_debug("setting to %u kHz because of event %u\n",
-						policy->max, event);
-		__cpufreq_driver_target(policy, policy->max,
+		if (booted){
+			__cpufreq_driver_target(policy, policy->max,
 						CPUFREQ_RELATION_H);
+			return 0;
+		}
+
+		if ( policy->cpu == 0 || policy->cpu ==1 ){
+			__cpufreq_driver_target(policy, 1593600,
+						CPUFREQ_RELATION_H);
+		}
+		else {
+			__cpufreq_driver_target(policy, 2150400,
+						CPUFREQ_RELATION_H);
+		}
 		break;
 	default:
 		break;
