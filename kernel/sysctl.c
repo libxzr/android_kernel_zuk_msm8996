@@ -1270,8 +1270,6 @@ static struct ctl_table kern_table[] = {
 	{ }
 };
 
-static int fake_swappiness=60;
-
 static struct ctl_table vm_table[] = {
 	{
 		.procname	= "overcommit_memory",
@@ -1391,8 +1389,8 @@ static struct ctl_table vm_table[] = {
 	},
 	{
 		.procname	= "swappiness",
-		.data		= &fake_swappiness,
-		.maxlen		= sizeof(fake_swappiness),
+		.data		= &vm_swappiness,
+		.maxlen		= sizeof(vm_swappiness),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
