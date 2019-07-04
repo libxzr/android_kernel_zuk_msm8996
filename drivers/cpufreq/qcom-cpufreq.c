@@ -75,12 +75,6 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 	return ret;
 }
 
-static __read_mostly int freq_update_delta=10000;
-module_param_named(freq_update_delta, freq_update_delta, int, 0644);
-
-static __read_mostly int freq_update_delay=1000;
-module_param_named(freq_update_delay, freq_update_delay, int, 0644);
-
 static int msm_cpufreq_target(struct cpufreq_policy *policy,
 				unsigned int target_freq,
 				unsigned int relation)
@@ -126,8 +120,8 @@ static int msm_cpufreq_target(struct cpufreq_policy *policy,
 
 	/* The old rate needs time to settle before it can be changed again */
 	delta_us = ktime_us_delta(ktime_get_boottime(), udata->last_update);
-	if (delta_us < freq_update_delta)
-		usleep_range(freq_update_delta - delta_us, freq_update_delta + freq_update_delay - delta_us);
+	if (delta_us < 10000)
+		usleep_range(10000 - delta_us, 11000 - delta_us);
 	udata->last_update = ktime_get_boottime();
 
 	ret = set_cpu_freq(policy, table[index].frequency,
