@@ -5,7 +5,7 @@ device="all"
 dirty="false"
 tc="clang"
 
-clang_path="${HOME}/linux-x86/clang-r353983d/bin/clang"
+clang_path="${HOME}/linux-x86/clang-r353983e/bin/clang"
 gcc_path="${HOME}/aarch64-linux-gnu/bin/aarch64-linux-gnu-"
 gcc4_path="${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
 gcc4_32_path="${HOME}/arm-linux-gnueabi/bin/arm-linux-gnueabi-"
