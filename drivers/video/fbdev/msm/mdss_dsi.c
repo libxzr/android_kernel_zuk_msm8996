@@ -1884,11 +1884,20 @@ static int mdss_dsi_disp_wake_thread(void *data)
 	return 0;
 }
 
+extern int trigger_cpufreq_underclock(void);
+extern int resume_cpufreq_underclock(void);
+
 static void mdss_dsi_display_wake(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	if (atomic_cmpxchg(&ctrl_pdata->disp_en, MDSS_DISPLAY_OFF,
 			   MDSS_DISPLAY_WAKING) == MDSS_DISPLAY_OFF)
 		wake_up(&ctrl_pdata->wake_waitq);
+
+	lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
+	#ifdef CONFIG_STATE_NOTIFIER
+	state_resume();
+	#endif
+	resume_cpufreq_underclock();
 }
 
 static int mdss_dsi_fb_unblank_cb(struct notifier_block *nb,
@@ -2980,9 +2989,6 @@ static struct attribute *dynamic_bitclk_fs_attrs[] = {
 static struct attribute_group mdss_dsi_fs_attrs_group = {
 	.attrs = dynamic_bitclk_fs_attrs,
 };
-
-extern int trigger_cpufreq_underclock(void);
-extern int resume_cpufreq_underclock(void);
 
 static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 				  int event, void *arg)
