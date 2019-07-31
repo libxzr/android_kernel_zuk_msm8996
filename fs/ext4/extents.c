@@ -2826,6 +2826,7 @@ ext4_ext_more_to_rm(struct ext4_ext_path *path)
 int ext4_ext_remove_space(struct inode *inode, ext4_lblk_t start,
 			  ext4_lblk_t end)
 {
+	struct ext4_ext_path path_onstack[SZ_4K / sizeof(struct ext4_ext_path)];
 	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 	int depth = ext_depth(inode);
 	struct ext4_ext_path *path = NULL;
