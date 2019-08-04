@@ -104,7 +104,7 @@ terminate(){
 }
 
 
-	build_z2_row&&build_z2_plus
+	build_z2_plus&&build_z2_row
 	END=$(date +"%s")
 	KDURATION=`expr $END - $START`
 	tg_notify "Build finished for #${DRONE_BUILD_NUMBER}.(Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
