@@ -1,0 +1,22 @@
+kind: pipeline
+name: nameless_build
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  depth: 1
+
+steps:
+  - name: setup&build
+    image: ubuntu:latest
+    environment:
+      BOTTOKEN:
+        from_secret: bot_token
+      CHATID:
+        from_secret: chat_id
+    commands:
+      - export HOME=/drone
+      - ./drone-setup
+      - ./drone-build
