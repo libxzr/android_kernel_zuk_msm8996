@@ -99,7 +99,7 @@ tg_notify(){
 }
 
 terminate(){
-  telegram_notify "${1}"
+  tg_notify "${1}"
   exit 1
 }
 
