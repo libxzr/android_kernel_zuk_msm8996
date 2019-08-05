@@ -65,6 +65,19 @@ build_z2_plus(){
 	mkzip "z2_plus"
 }
 
+build_z2_plus_oc(){
+	export KBUILD_BUILD_USER="z2_plus"
+	export KBUILD_BUILD_HOST="LibXZR"
+	print "Building panel-OC ${1}Hz Kernel for z2_plus..." blue
+	sed -i "s/qcom,mdss-dsi-panel-framerate = <60>/qcom,mdss-dsi-panel-framerate = <${1}>/g" arch/arm64/boot/dts/qcom/zuk/dsi-panel-tianma-1080p-video.dtsi
+	make $args z2_plus_defconfig&&make $args
+	if [ $? -ne 0 ]; then
+    terminate "Error while building panel-OC ${1}Hz kernel for z2_plus!"
+    fi
+	mkzip "z2_plus-${1}Hz"
+	sed -i "s/qcom,mdss-dsi-panel-framerate = <${1}>/qcom,mdss-dsi-panel-framerate = <60>/g" arch/arm64/boot/dts/qcom/zuk/dsi-panel-tianma-1080p-video.dtsi
+}
+
 build_z2_row(){
 	export KBUILD_BUILD_USER="z2_row"
 	export KBUILD_BUILD_HOST="LibXZR"
@@ -104,7 +117,14 @@ terminate(){
 }
 
 
-	build_z2_plus&&build_z2_row
+	build_z2_plus
+	
+	for i in 68 72 75
+	do
+	build_z2_plus_oc ${i}
+	done
+	
+	build_z2_row
 	END=$(date +"%s")
 	KDURATION=`expr $END - $START`
 	tg_notify "Build finished for #${DRONE_BUILD_NUMBER}.(Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
