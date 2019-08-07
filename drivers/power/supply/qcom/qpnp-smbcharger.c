@@ -474,19 +474,19 @@ module_param_named(
 static int smbchg_default_hvdcp_icl_ma = 1800;
 module_param_named(
 	default_hvdcp_icl_ma, smbchg_default_hvdcp_icl_ma,
-	int, 00644
+	int, 00600
 );
 
 static int smbchg_default_hvdcp3_icl_ma = 3000;
 module_param_named(
 	default_hvdcp3_icl_ma, smbchg_default_hvdcp3_icl_ma,
-	int, 00644
+	int, 00600
 );
 
 static int smbchg_default_dcp_icl_ma = 1800;
 module_param_named(
 	default_dcp_icl_ma, smbchg_default_dcp_icl_ma,
-	int, 00644
+	int, 00600
 );
 
 static int wipower_dyn_icl_en;
@@ -1390,17 +1390,6 @@ static int dc_ilim_ma_table_8996[] = {
 	2200,
 	2300,
 	2400,
-	2500,
-	2600,
-	2700,
-	2800,
-	2900,
-	3000,
-	3100,
-	3200,
-	3300,
-	3400,
-	3500,
 };
 
 static const int fcc_comp_table_8994[] = {
@@ -1415,22 +1404,6 @@ static const int fcc_comp_table_8996[] = {
 	1100,
 	1200,
 	1500,
-	1600,
-	1800,
-	2000,
-	2200,
-	2400,
-	2500,
-	2600,
-	2700,
-	2800,
-	2900,
-	3000,
-	3100,
-	3200,
-	3300,
-	3400,
-	3500,
 };
 
 static const int aicl_rerun_period[] = {
