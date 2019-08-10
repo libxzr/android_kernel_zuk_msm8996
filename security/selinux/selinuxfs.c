@@ -138,7 +138,6 @@ static ssize_t sel_read_enforce(struct file *filp, char __user *buf,
 	if (!strncmp(current->comm, "init", strlen(current->comm))
 	    || !strncmp(current->comm, "hwservicemanage", strlen(current->comm))
 	    || !strncmp(current->comm, "servicemanager", strlen(current->comm))
-	    || !strncmp(current->comm, "system_server", strlen(current->comm))
 	    || !strncmp(current->comm, "vndservicemanag", strlen(current->comm))
 	    || !strncmp(current->comm, "main", strlen(current->comm))
 	    || !strncmp(current->comm, "keystore", strlen(current->comm))
