@@ -133,13 +133,22 @@ static ssize_t sel_read_enforce(struct file *filp, char __user *buf,
 {
 	char tmpbuf[TMPBUFLEN];
 	ssize_t length;
-	bool hide = false;
+	bool hide = true;
 
-	if (current->cred->uid.val >= 10000)
-		hide = true;
-	else if (strstr(current->comm, ".gms") != NULL)
-		hide = true;
-
+	if (!strncmp(current->comm, "init", strlen(current->comm))
+	    || !strncmp(current->comm, "hwservicemanage", strlen(current->comm))
+	    || !strncmp(current->comm, "servicemanager", strlen(current->comm))
+	    || !strncmp(current->comm, "system_server", strlen(current->comm))
+	    || !strncmp(current->comm, "vndservicemanag", strlen(current->comm))
+	    || !strncmp(current->comm, "main", strlen(current->comm))
+	    || !strncmp(current->comm, "keystore", strlen(current->comm))
+	    || !strncmp(current->comm, "magiskd", strlen(current->comm))) {
+		hide = false;
+	    pr_info("selinuxfs: Showing selinux real status for %s (%d)\n", current->comm, current->cred->uid.val);
+    }
+    else
+        pr_info("selinuxfs: Faking selinux status for %s (%d)\n", current->comm, current->cred->uid.val);
+    
 	length = scnprintf(tmpbuf, TMPBUFLEN, "%d", hide ? 1 : 0);
 	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
 }
