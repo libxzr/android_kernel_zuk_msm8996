@@ -16,6 +16,12 @@ steps:
         from_secret: bot_token
       CHATID:
         from_secret: chat_id
+      ftp_server:
+        from_secret: ftp_server
+      ftp_username:
+        from_secret: ftp_username
+      ftp_pwd:
+        from_secret: ftp_pwd
     commands:
       - export HOME=/drone
       - ./drone-setup

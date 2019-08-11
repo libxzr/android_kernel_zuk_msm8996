@@ -116,6 +116,21 @@ terminate(){
   exit 1
 }
 
+ftp_upload(){
+ftp -v -n ${ftp_server}<<EOF
+    user ${ftp_username} ${ftp_pwd}
+    passive
+    binary
+    lcd ${HOME}
+    mkdir ${date}
+    cd ${date}
+    prompt
+    mput *Nameless*.zip
+    bye
+EOF
+    echo "Ftp uploading done!"
+}
+
 
 	build_z2_plus
 	
@@ -128,3 +143,4 @@ terminate(){
 	END=$(date +"%s")
 	KDURATION=`expr $END - $START`
 	tg_notify "Build finished for #${DRONE_BUILD_NUMBER} ( ${date} ).  ( Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
+	ftp_upload

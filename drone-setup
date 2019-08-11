@@ -1,5 +1,5 @@
 apt-get update
-apt-get install -y build-essential bc curl git zip ccache python zstd jq wget tar gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
+apt-get install -y build-essential bc curl git zip ftp ccache python zstd jq wget tar gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
 
 cd $HOME
 #Get and install git-lfs
