@@ -144,7 +144,7 @@ build_z2_plus(){
 	if [ $oc == "true" ]
 	then
 	build_oc
-	done
+	fi
 }
 
 build_z2_plus_oc(){
