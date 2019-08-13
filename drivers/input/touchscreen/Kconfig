@@ -1137,13 +1137,14 @@ config TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE_EXTRA_SYSFS
 
 	  If unsure, say N.
 
-config TOUCHSCREEN_GT9X_V24
-	bool "Goodix touchpanel GT9X_2.4 series"
+config TOUCHSCREEN_GT9XX
+	bool "Goodix touchpanel GT9xx series"
 	depends on I2C
 	help
-	  Say Y here if you have a Goodix GT9x_2.4 touchscreen.
-	  Gt9x_2.4 controllers are multi touch controllers which can
+	  Say Y here if you have a Goodix GT9xx touchscreen.
+	  Gt9xx controllers are multi touch controllers which can
 	  report 5 touches at a time.
+
           If unsure, say N.
           
 config TOUCHSCREEN_GT1151
