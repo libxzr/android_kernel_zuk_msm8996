@@ -31,8 +31,10 @@ module_param_named(cpubw_boost_freq, cpubw_boost_freq, long, 0644);
 u32 cpubw_wake_boost_duration=CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS;
 module_param_named(cpubw_wake_boost_duration, cpubw_wake_boost_duration, int, 0644);
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 u16 dynamic_stune_boost=CONFIG_DYNAMIC_STUNE_BOOST_VALUE;
 module_param_named(dynamic_stune_boost, dynamic_stune_boost, short, 0644);
+#endif
 
 u16 app_launch_boost_ms=0;
 module_param_named(app_launch_boost_ms, app_launch_boost_ms, short, 0644);
