@@ -18,8 +18,8 @@ steps:
         from_secret: chat_id
       ftp_server:
         from_secret: ftp_server
-      ftp_username:
-        from_secret: ftp_username
+      ftp_username_smp:
+        from_secret: ftp_username_smp
       ftp_pwd:
         from_secret: ftp_pwd
     commands:

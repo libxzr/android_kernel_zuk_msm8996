@@ -2,5 +2,5 @@ apt-get update
 apt-get install -y build-essential bc python curl git zip ftp gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
 
 cd $HOME
-git clone --depth=1 https://github.com/xzr467706992/AnyKernel2
+git clone --depth=1 https://github.com/xzr467706992/AnyKernel2 -b "z2/smp"
 git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86

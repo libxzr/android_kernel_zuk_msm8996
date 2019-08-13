@@ -91,34 +91,24 @@ build_z2_row(){
 }
 
 mkzip (){
-	zipname="(${1})Nameless Kernel[4.4-EAS] $date.zip"
+	zipname="(${1})Nameless Kernel[4.4-SMP] $date.zip"
 	cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 	cd ~/AnyKernel2
-	git checkout z2/eas
+	git checkout z2/smp
 	zip -r "$zipname" *
 	mv -f "$zipname" ${HOME}
 	cd ${HOME}
-	tg_upload "$zipname"
 	cd $source
 	print "All done.Find it at ${HOME}/$zipname" green
 }
 
-tg_upload(){
-    curl -s https://api.telegram.org/bot"${BOTTOKEN}"/sendDocument -F document=@"${1}" -F chat_id="${CHATID}"
-}
-
-tg_notify(){
-    curl -s https://api.telegram.org/bot"${BOTTOKEN}"/sendMessage -d parse_mode="Markdown" -d text="${1}" -d chat_id="${CHATID}"
-}
-
 terminate(){
-  tg_notify "${1}"
   exit 1
 }
 
 ftp_upload(){
 ftp -v -n ${ftp_server}<<EOF
-    user ${ftp_username} ${ftp_pwd}
+    user ${ftp_username_smp} ${ftp_pwd}
     passive
     binary
     lcd ${HOME}
@@ -142,5 +132,4 @@ EOF
 	build_z2_row
 	END=$(date +"%s")
 	KDURATION=`expr $END - $START`
-	tg_notify "Build finished for #${DRONE_BUILD_NUMBER} ( ${date} ).  ( Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
 	ftp_upload
