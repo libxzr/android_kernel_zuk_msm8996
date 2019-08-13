@@ -20,8 +20,6 @@ struct kern_ipc_perm;
 
 #ifdef CONFIG_SECURITY_SELINUX
 
-#define SELINUX_LABEL_LENGTH 128
-
 /**
  * selinux_is_enabled - is SELinux enabled?
  */

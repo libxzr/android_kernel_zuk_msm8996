@@ -1719,14 +1719,14 @@ out:
 /*
  * Determine the label for an inode that might be unioned.
  */
-static int selinux_determine_inode_label(const struct task_security_struct *tsec,
-					 const struct inode *dir,
+static int selinux_determine_inode_label(const struct inode *dir,
 					 const struct qstr *name,
 					 u16 tclass,
 					 u32 *_new_isid)
 {
 	const struct superblock_security_struct *sbsec = dir->i_sb->s_security;
 	const struct inode_security_struct *dsec = dir->i_security;
+	const struct task_security_struct *tsec = current_security();
 
 	if ((sbsec->flags & SE_SBINITIALIZED) &&
 	    (sbsec->behavior == SECURITY_FS_USE_MNTPOINT)) {
@@ -1768,8 +1768,8 @@ static int may_create(struct inode *dir,
 	if (rc)
 		return rc;
 
-	rc = selinux_determine_inode_label(current_security(), dir,
-					   &dentry->d_name, tclass, &newsid);
+	rc = selinux_determine_inode_label(dir, &dentry->d_name, tclass,
+					   &newsid);
 	if (rc)
 		return rc;
 
@@ -2745,8 +2745,7 @@ static int selinux_dentry_init_security(struct dentry *dentry, int mode,
 	u32 newsid;
 	int rc;
 
-	rc = selinux_determine_inode_label(current_security(),
-					   d_inode(dentry->d_parent), name,
+	rc = selinux_determine_inode_label(d_inode(dentry->d_parent), name,
 					   inode_mode_to_security_class(mode),
 					   &newsid);
 	if (rc)
@@ -2773,7 +2772,7 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
 	sid = tsec->sid;
 	newsid = tsec->create_sid;
 
-	rc = selinux_determine_inode_label(current_security(),
+	rc = selinux_determine_inode_label(
 		dir, qstr,
 		inode_mode_to_security_class(inode->i_mode),
 		&newsid);
@@ -3128,7 +3127,6 @@ static int selinux_inode_getsecurity(const struct inode *inode, const char *name
 	u32 size;
 	int error;
 	char *context = NULL;
-	char context_onstack[SELINUX_LABEL_LENGTH];
 	struct inode_security_struct *isec = inode->i_security;
 
 	if (strcmp(name, XATTR_SELINUX_SUFFIX))
@@ -3148,27 +3146,20 @@ static int selinux_inode_getsecurity(const struct inode *inode, const char *name
 	if (!error)
 		error = cred_has_capability(current_cred(), CAP_MAC_ADMIN,
 					    SECURITY_CAP_NOAUDIT);
-	if (!alloc)
-		context = context_onstack;
-	if (!error) {
-		if (alloc)
-			error = security_sid_to_context_force(isec->sid, &context,
-							      &size);
-		else
-			error = security_sid_to_context_force_stack(isec->sid, &context,
-							      &size);
-	} else {
-		if (alloc)
-			error = security_sid_to_context(isec->sid, &context, &size);
-		else
-			error = security_sid_to_context_stack(isec->sid, &context, &size);
-	}
+	if (!error)
+		error = security_sid_to_context_force(isec->sid, &context,
+						      &size);
+	else
+		error = security_sid_to_context(isec->sid, &context, &size);
 	if (error)
 		return error;
 	error = size;
-	if (alloc)
+	if (alloc) {
 		*buffer = context;
-
+		goto out_nofree;
+	}
+	kfree(context);
+out_nofree:
 	return error;
 }
 
@@ -3207,41 +3198,6 @@ static void selinux_inode_getsecid(const struct inode *inode, u32 *secid)
 {
 	struct inode_security_struct *isec = inode->i_security;
 	*secid = isec->sid;
-}
-
-static int selinux_inode_copy_up(struct dentry *src, struct cred **new)
-{
-	u32 sid;
-	struct task_security_struct *tsec;
-	struct cred *new_creds = *new;
-
-	if (new_creds == NULL) {
-		new_creds = prepare_creds();
-		if (!new_creds)
-			return -ENOMEM;
-	}
-
-	tsec = new_creds->security;
-	/* Get label from overlay inode and set it in create_sid */
-	selinux_inode_getsecid(d_inode(src), &sid);
-	tsec->create_sid = sid;
-	*new = new_creds;
-	return 0;
-}
-
-static int selinux_inode_copy_up_xattr(const char *name)
-{
-	/* The copy_up hook above sets the initial context on an inode, but we
-	 * don't then want to overwrite it by blindly copying all the lower
-	 * xattrs up.  Instead, we have to filter out SELinux-related xattrs.
-	 */
-	if (strcmp(name, XATTR_NAME_SELINUX) == 0)
-		return 1; /* Discard */
-	/*
-	 * Any other attribute apart from SELINUX is not claimed, supported
-	 * by selinux.
-	 */
-	return -EOPNOTSUPP;
 }
 
 /* file security operations */
@@ -4597,7 +4553,6 @@ static int selinux_socket_getpeersec_stream(struct socket *sock, char __user *op
 {
 	int err = 0;
 	char *scontext;
-	char buf[SELINUX_LABEL_LENGTH];
 	u32 scontext_len;
 	struct sk_security_struct *sksec = sock->sk->sk_security;
 	u32 peer_sid = SECSID_NULL;
@@ -4608,9 +4563,7 @@ static int selinux_socket_getpeersec_stream(struct socket *sock, char __user *op
 	if (peer_sid == SECSID_NULL)
 		return -ENOPROTOOPT;
 
-	scontext = buf;
-
-	err = security_sid_to_context_stack(peer_sid, &scontext, &scontext_len);
+	err = security_sid_to_context(peer_sid, &scontext, &scontext_len);
 	if (err)
 		return err;
 
@@ -4625,7 +4578,7 @@ static int selinux_socket_getpeersec_stream(struct socket *sock, char __user *op
 out_len:
 	if (put_user(scontext_len, optlen))
 		err = -EFAULT;
-
+	kfree(scontext);
 	return err;
 }
 
@@ -6020,8 +5973,6 @@ static struct security_hook_list selinux_hooks[] = {
 	LSM_HOOK_INIT(inode_setsecurity, selinux_inode_setsecurity),
 	LSM_HOOK_INIT(inode_listsecurity, selinux_inode_listsecurity),
 	LSM_HOOK_INIT(inode_getsecid, selinux_inode_getsecid),
-	LSM_HOOK_INIT(inode_copy_up, selinux_inode_copy_up),
-	LSM_HOOK_INIT(inode_copy_up_xattr, selinux_inode_copy_up_xattr),
 
 	LSM_HOOK_INIT(file_permission, selinux_file_permission),
 	LSM_HOOK_INIT(file_alloc_security, selinux_file_alloc_security),
