@@ -5,11 +5,11 @@ device="all"
 dirty="false"
 tc="clang"
 oc="false"
-
-clang_path="${HOME}/linux-x86/clang-r353983e/bin/clang"
-gcc_path="${HOME}/aarch64-linux-gnu/bin/aarch64-linux-gnu-"
-gcc4_path="${HOME}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-gcc4_32_path="${HOME}/arm-linux-gnueabi/bin/arm-linux-gnueabi-"
+DIR="$( cd "$( dirname "$0"  )" &&cd ..&& pwd  )"	
+clang_path="${DIR}/linux-x86/clang-r353983e/bin/clang"
+gcc_path="${DIR}/aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+gcc4_path="${DIR}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+gcc4_32_path="${DIR}/arm-linux-gnueabi/bin/arm-linux-gnueabi-"
 
 action="build"
 release="false"
@@ -209,7 +209,7 @@ mkzip (){
 	cp -f "$zipname" ~
 	rm -f "$zipname"
 	cd $source
-	print "All done.Find it at ${HOME}/$zipname" green
+	print "All done.Find it at ${DIR}/$zipname" green
 }
 
 build_oc(){
