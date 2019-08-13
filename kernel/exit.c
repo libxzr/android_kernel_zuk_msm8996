@@ -722,6 +722,7 @@ void do_exit(long code)
 
 	exit_signals(tsk);  /* sets PF_EXITING */
 
+	sched_exit(tsk);
 	schedtune_exit_task(tsk);
 
 	if (tsk->flags & PF_SU) {
@@ -785,7 +786,6 @@ void do_exit(long code)
 	 */
 	perf_event_exit_task(tsk);
 
-	sched_autogroup_exit_task(tsk);
 	cgroup_exit(tsk);
 
 	/*

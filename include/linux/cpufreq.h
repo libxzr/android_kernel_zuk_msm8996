@@ -127,9 +127,6 @@ struct cpufreq_policy {
 	unsigned int		up_transition_delay_us;
 	unsigned int		down_transition_delay_us;
 
-	/* Boost switch for tasks with p->in_iowait set */
-	bool iowait_boost_enable;
-
 	 /* Cached frequency lookup from cpufreq_driver_resolve_freq. */
 	unsigned int cached_target_freq;
 	int cached_resolved_idx;
@@ -540,15 +537,6 @@ extern struct cpufreq_governor cpufreq_gov_sched;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL)
 extern struct cpufreq_governor cpufreq_gov_schedutil;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_schedutil)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_HELIX)
- extern struct cpufreq_governor cpufreq_gov_helix_schedutil;
- #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_helix_schedutil)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_PWRUTILX)
-extern struct cpufreq_governor cpufreq_gov_pwrutilx;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_pwrutilx)
-#elif defined(CONFIG_CPU_FREQ_GOV_BLU_SCHEDUTIL)
-extern struct cpufreq_governor blu_schedutil_gov;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&blu_schedutil_gov)
 #endif
 
 static inline void cpufreq_policy_apply_limits(struct cpufreq_policy *policy)
@@ -712,6 +700,5 @@ int cpufreq_generic_init(struct cpufreq_policy *policy,
 
 struct sched_domain;
 unsigned long cpufreq_scale_freq_capacity(struct sched_domain *sd, int cpu);
-unsigned long cpufreq_scale_max_freq_capacity(struct sched_domain *sd, int cpu);
-unsigned long cpufreq_scale_min_freq_capacity(struct sched_domain *sd, int cpu);
+unsigned long cpufreq_scale_max_freq_capacity(int cpu);
 #endif /* _LINUX_CPUFREQ_H */

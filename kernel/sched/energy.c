@@ -27,7 +27,10 @@
 #include <linux/sched_energy.h>
 #include <linux/stddef.h>
 
+#include "sched.h"
+
 struct sched_group_energy *sge_array[NR_CPUS][NR_SD_LEVELS];
+bool sched_energy_aware;
 
 static void free_resources(void)
 {
@@ -56,6 +59,13 @@ void init_sched_energy_costs(void)
 	int sd_level, i, nstates, cpu;
 	const __be32 *val;
 
+	if (!energy_aware()) {
+		sched_energy_aware = false;
+		return;
+	}
+
+	sched_energy_aware = true;
+
 	for_each_possible_cpu(cpu) {
 		cn = of_get_cpu_node(cpu, NULL);
 		if (!cn) {
@@ -81,17 +91,11 @@ void init_sched_energy_costs(void)
 
 			sge = kcalloc(1, sizeof(struct sched_group_energy),
 				      GFP_NOWAIT);
-			if (!sge)
-				goto out;
 
 			nstates = (prop->length / sizeof(u32)) / 2;
 			cap_states = kcalloc(nstates,
 					     sizeof(struct capacity_state),
 					     GFP_NOWAIT);
-			if (!cap_states) {
-				kfree(sge);
-				goto out;
-			}
 
 			for (i = 0, val = prop->value; i < nstates; i++) {
 				cap_states[i].cap = be32_to_cpup(val++);
@@ -104,8 +108,6 @@ void init_sched_energy_costs(void)
 			prop = of_find_property(cp, "idle-cost-data", NULL);
 			if (!prop || !prop->value) {
 				pr_warn("No idle-cost data, skipping sched_energy init\n");
-				kfree(sge);
-				kfree(cap_states);
 				goto out;
 			}
 
@@ -113,11 +115,6 @@ void init_sched_energy_costs(void)
 			idle_states = kcalloc(nstates,
 					      sizeof(struct idle_state),
 					      GFP_NOWAIT);
-			if (!idle_states) {
-				kfree(sge);
-				kfree(cap_states);
-				goto out;
-			}
 
 			for (i = 0, val = prop->value; i < nstates; i++)
 				idle_states[i].power = be32_to_cpup(val++);
