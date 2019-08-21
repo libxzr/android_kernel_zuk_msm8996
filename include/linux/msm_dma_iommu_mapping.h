@@ -18,12 +18,6 @@
 #include <linux/scatterlist.h>
 #include <linux/dma-mapping.h>
 
-struct msm_iommu_meta;
-struct msm_iommu_data {
-	struct msm_iommu_meta *meta;
-	struct mutex lock;
-};
-
 #ifdef CONFIG_IOMMU_API
 /*
 * This function is not taking a reference to the dma_buf here. It is expected
@@ -62,7 +56,7 @@ int msm_dma_unmap_all_for_dev(struct device *dev);
  * Below is private function only to be called by framework (ION) and not by
  * clients.
  */
-void msm_dma_buf_freed(struct msm_iommu_data *data);
+void msm_dma_buf_freed(void *buffer);
 
 #else /*CONFIG_IOMMU_API*/
 
