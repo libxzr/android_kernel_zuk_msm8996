@@ -39,5 +39,5 @@ module_param_named(dynamic_stune_boost, dynamic_stune_boost, short, 0644);
 u16 app_launch_boost_ms=0;
 module_param_named(app_launch_boost_ms, app_launch_boost_ms, short, 0644);
 
-u16 lmk_boost_ms=500;
+u16 lmk_boost_ms=100;
 module_param_named(lmk_boost_ms, lmk_boost_ms, short, 0644);
