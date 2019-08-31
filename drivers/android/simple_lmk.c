@@ -21,12 +21,6 @@
 #include <uapi/linux/sched/types.h>
 #endif
 
-/* MIN_NICE isn't present and MAX_RT_PRIO is elsewhere in older kernels */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
-#include <linux/sched/rt.h>
-#define MIN_NICE -20
-#endif
-
 /* SEND_SIG_FORCED isn't present in newer kernels */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
 #define SIG_INFO_TYPE SEND_SIG_FORCED
@@ -77,7 +71,7 @@ static struct victim_info victims[MAX_VICTIMS];
 static DECLARE_WAIT_QUEUE_HEAD(oom_waitq);
 static DECLARE_COMPLETION(reclaim_done);
 static int victims_to_kill;
-static atomic_t needs_reclaim = ATOMIC_INIT(0);
+static bool needs_reclaim;
 
 static int victim_size_cmp(const void *lhs_ptr, const void *rhs_ptr)
 {
@@ -262,7 +256,13 @@ static int simple_lmk_reclaim_thread(void *data)
 	sched_setscheduler_nocheck(current, SCHED_FIFO, &sched_max_rt_prio);
 
 	while (1) {
-		wait_event(oom_waitq, atomic_read(&needs_reclaim));
+		bool should_stop;
+
+		wait_event(oom_waitq, (should_stop = kthread_should_stop()) ||
+				      READ_ONCE(needs_reclaim));
+
+		if (should_stop)
+			break;
 
 		/*
 		 * Kill a batch of processes and wait for their memory to be
@@ -274,7 +274,7 @@ static int simple_lmk_reclaim_thread(void *data)
 		do {
 			scan_and_kill(MIN_FREE_PAGES);
 			msleep(20);
-		} while (atomic_read(&needs_reclaim));
+		} while (READ_ONCE(needs_reclaim));
 	}
 
 	return 0;
@@ -289,13 +289,13 @@ void simple_lmk_decide_reclaim(int kswapd_priority)
 	if (kswapd_priority != aggression)
 		return;
 
-	if (!atomic_cmpxchg(&needs_reclaim, 0, 1))
+	if (!cmpxchg(&needs_reclaim, false, true))
 		wake_up(&oom_waitq);
 }
 
 void simple_lmk_stop_reclaim(void)
 {
-	atomic_set(&needs_reclaim, 0);
+	WRITE_ONCE(needs_reclaim, false);
 }
 
 void simple_lmk_mm_freed(struct mm_struct *mm)
@@ -319,10 +319,10 @@ void simple_lmk_mm_freed(struct mm_struct *mm)
 /* Initialize Simple LMK when lmkd in Android writes to the minfree parameter */
 static int simple_lmk_init_set(const char *val, const struct kernel_param *kp)
 {
-	static atomic_t init_done = ATOMIC_INIT(0);
+	static bool init_done;
 	struct task_struct *thread;
 
-	if (atomic_cmpxchg(&init_done, 0, 1))
+	if (cmpxchg(&init_done, false, true))
 		return 0;
 
 	thread = kthread_run_perf_critical(simple_lmk_reclaim_thread, NULL,
