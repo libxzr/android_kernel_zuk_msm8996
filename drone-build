@@ -1,5 +1,5 @@
 #!/bin/bash
-clang_path="${HOME}/linux-x86/clang-r365631/bin/clang"
+clang_path="${HOME}/linux-x86/clang-r365631b/bin/clang"
 gcc_path="aarch64-linux-gnu-"
 gcc_32_path="arm-linux-gnueabi-"
 
