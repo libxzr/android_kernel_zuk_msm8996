@@ -1,0 +1,273 @@
+#!/bin/bash
+input=${*}
+
+device="all"
+dirty="false"
+tc="clang"
+oc="false"
+DIR="$( cd "$( dirname "$0"  )" &&cd ..&& pwd  )"	
+clang_path="${DIR}/linux-x86/clang-r377782c/bin/clang"
+gcc_path="aarch64-linux-gnu-"
+gcc4_path="${DIR}/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+gcc4_32_path="arm-linux-gnueabi-"
+
+action="build"
+release="false"
+version="X"
+source=`pwd`
+
+date="`date +"%m%d%H%M"`"
+
+args="-j$(nproc --all) O=out \
+	ARCH=arm64 \
+	SUBARCH=arm64 "
+
+print (){
+case ${2} in
+	"red")
+	echo -e "\033[31m $1 \033[0m";;
+
+	"blue")
+	echo -e "\033[34m $1 \033[0m";;
+
+	"yellow")
+	echo -e "\033[33m $1 \033[0m";;
+
+	"purple")
+	echo -e "\033[35m $1 \033[0m";;
+
+	"sky")
+	echo -e "\033[36m $1 \033[0m";;
+
+	"green")
+	echo -e "\033[32m $1 \033[0m";;
+
+	*)
+	echo $1
+	;;
+	esac
+}
+
+for i in ${input}
+	do
+		case ${i} in
+			"z2_plus")
+			device="z2_plus";;
+
+			"z2_row")
+			device="z2_row";;
+
+			"all")
+			device="all";;
+			
+			"--dirty"|"-d")
+			dirty="true";;
+			
+			"--oc"|"-o")
+			oc="true";;
+
+			"--gcc4")
+			tc="gcc4";;
+
+			"--gcc")
+			tc="gcc";;
+
+			"--clang")
+			tc="clang";;
+
+			"--regen"|"-rg"|"regen")
+			action="regen";;
+
+			"--menu"|"-m")
+			action="menu";;
+
+		*)
+		did="false"
+		if [[ $i =~ "-r=" ]];then
+		release="true"&&version="${i#*r=}"&&did="true"
+		fi
+
+		if [[ $i =~ "-v=" ]];then
+		date="${i#*v=}"&&did="true"
+		fi
+		
+		if [ $did == "false" ]
+		then
+		print "Error input" red&&exit
+		fi
+
+		;;
+		esac
+	done
+if [ $action == "build" ];then
+if [ $release == "true" ]
+then
+print "You are building a release version:R$version" green
+args+="LOCALVERSION=-R$version "
+else
+print "You are building a snapshot version:$date" yellow
+args+="LOCALVERSION=-$date "
+fi;fi
+
+if [ $tc == "clang" ]
+then
+args+="CC=$clang_path \
+	CLANG_TRIPLE=aarch64-linux-gnu- \
+	CROSS_COMPILE=$gcc_path "
+fi
+
+if [ $tc == "gcc4" ]
+then
+args+="CROSS_COMPILE=$gcc4_path "
+fi
+
+if [ $tc == "gcc" ]
+then
+args+="CROSS_COMPILE=$gcc_path "
+fi
+
+args+="CROSS_COMPILE_ARM32=$gcc4_32_path "
+
+clean(){
+	make mrproper
+	make $args mrproper
+}
+
+build_z2_plus(){
+	export KBUILD_BUILD_USER="z2_plus"
+	export KBUILD_BUILD_HOST="LibXZR"
+	[ $dirty == "false" ]&&clean
+	print "Building Kernel for z2_plus..." blue
+	make $args z2_plus_defconfig&&make $args
+	mkzip "z2_plus"
+	
+	if [ $oc == "true" ]
+	then
+	build_oc
+	fi
+}
+
+build_z2_plus_oc(){
+	export KBUILD_BUILD_USER="z2_plus"
+	export KBUILD_BUILD_HOST="LibXZR"
+	print "Building panel-OC ${1}Hz Kernel for z2_plus..." blue
+	sed -i "s/qcom,mdss-dsi-panel-framerate = <60>/qcom,mdss-dsi-panel-framerate = <${1}>/g" arch/arm64/boot/dts/qcom/zuk/dsi-panel-tianma-1080p-video.dtsi
+	make $args z2_plus_defconfig&&make $args
+	mkzip "z2_plus-${1}Hz"
+	sed -i "s/qcom,mdss-dsi-panel-framerate = <${1}>/qcom,mdss-dsi-panel-framerate = <60>/g" arch/arm64/boot/dts/qcom/zuk/dsi-panel-tianma-1080p-video.dtsi
+}
+
+build_z2_row(){
+	export KBUILD_BUILD_USER="z2_row"
+	export KBUILD_BUILD_HOST="LibXZR"
+	[ $dirty == "false" ]&&clean
+	print "Building Kernel for z2_row..." blue
+	make $args z2_row_defconfig&&make $args
+	mkzip "z2_row"
+}
+
+menu_z2_plus(){
+	[ $dirty == "false" ]&&clean
+	make $args z2_plus_defconfig&&make $args menuconfig
+	print "Press enter to save" green
+	read
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_plus_defconfig
+}
+
+menu_z2_row(){
+	[ $dirty == "false" ]&&clean
+	make $args z2_row_defconfig&&make $args menuconfig
+	print "Press enter to save" green
+	read
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_row_defconfig
+}
+
+regen_z2_plus(){
+	make $args z2_plus_defconfig
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_plus_defconfig
+}
+
+regen_z2_row(){
+	make $args z2_row_defconfig
+	make $args savedefconfig
+	mv out/defconfig arch/arm64/configs/z2_row_defconfig
+}
+
+mkzip (){
+	if [ $release == "true" ];then
+	zipname="(${1})Nameless Kernel[4.4-EAS] R$version.zip"
+	else
+	zipname="(${1})Nameless Kernel[4.4-EAS] $date.zip"
+	fi
+	cp -f out/arch/arm64/boot/Image.gz-dtb ${DIR}/AnyKernel2
+	cd ${DIR}/AnyKernel2
+	git checkout z2/eas
+	zip -r "$zipname" *
+	cp -f "$zipname" ${DIR}
+	rm -f "$zipname"
+	cd $source
+	print "All done.Find it at ${DIR}/$zipname" green
+}
+
+build_oc(){
+    for i in 68 72 75
+	do
+	build_z2_plus_oc ${i}
+	done
+}
+
+
+
+if [ $action == "build" ]
+then
+case ${device} in
+	"z2_plus")
+	build_z2_plus;;
+
+	"z2_row")
+	build_z2_row;;
+
+	"all")
+	build_z2_row&&build_z2_plus;;
+
+	*)
+
+	;;
+	esac
+fi
+
+if [ $action == "regen" ]
+then
+case ${device} in
+	"z2_plus")
+	regen_z2_plus;;
+
+	"z2_row")
+	regen_z2_row;;
+
+	"all")
+	regen_z2_plus&&regen_z2_row;;
+
+	*)
+
+	;;
+	esac
+fi
+
+if [ $action == "menu" ]
+then
+case ${device} in
+	"z2_plus")
+	menu_z2_plus;;
+
+	"z2_row")
+	menu_z2_row;;
+
+	*)
+
+	;;
+	esac
+fi
