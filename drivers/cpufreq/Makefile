@@ -83,6 +83,9 @@ obj-$(CONFIG_ARM_VEXPRESS_SPC_CPUFREQ)	+= vexpress-spc-cpufreq.o
 obj-$(CONFIG_ACPI_CPPC_CPUFREQ) += cppc_cpufreq.o
 obj-$(CONFIG_CPU_FREQ_MSM)              += qcom-cpufreq.o
 
+# Boost control
+obj-$(CONFIG_BOOST_CONTROL)		+= boost_control.o
+
 ##################################################################################
 # PowerPC platform drivers
 obj-$(CONFIG_CPU_FREQ_CBE)		+= ppc-cbe-cpufreq.o
