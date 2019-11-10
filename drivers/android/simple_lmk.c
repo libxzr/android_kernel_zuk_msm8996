@@ -259,9 +259,12 @@ static int simple_lmk_reclaim_thread(void *data)
 	return 0;
 }
 
+static int aggression = CONFIG_ANDROID_SIMPLE_LMK_AGGRESSION;
+module_param_named(aggression, aggression, int, 0644);
+
 void simple_lmk_decide_reclaim(int kswapd_priority)
 {
-	if (kswapd_priority == CONFIG_ANDROID_SIMPLE_LMK_AGGRESSION &&
+	if (kswapd_priority == aggression &&
 	    !atomic_cmpxchg(&needs_reclaim, 0, 1))
 		wake_up(&oom_waitq);
 }
