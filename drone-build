@@ -56,13 +56,12 @@ clean(){
 build_z2_plus(){
 	export KBUILD_BUILD_USER="z2_plus"
 	export KBUILD_BUILD_HOST="LibXZR"
-	clean
 	print "Building Kernel for z2_plus..." blue
 	make $args z2_plus_defconfig&&make $args
 	if [ $? -ne 0 ]; then
     terminate "Error while building for z2_plus!"
     fi
-	mkzip "z2_plus"
+	mkzip "z2_plus-${1}"
 }
 
 build_z2_plus_oc(){
@@ -74,20 +73,19 @@ build_z2_plus_oc(){
 	if [ $? -ne 0 ]; then
     terminate "Error while building panel-OC ${1}Hz kernel for z2_plus!"
     fi
-	mkzip "z2_plus-${1}Hz"
+	mkzip "z2_plus-${2}-${1}Hz"
 	sed -i "s/qcom,mdss-dsi-panel-framerate = <${1}>/qcom,mdss-dsi-panel-framerate = <60>/g" arch/arm64/boot/dts/qcom/zuk/dsi-panel-tianma-1080p-video.dtsi
 }
 
 build_z2_row(){
 	export KBUILD_BUILD_USER="z2_row"
 	export KBUILD_BUILD_HOST="LibXZR"
-	clean
 	print "Building Kernel for z2_row..." blue
 	make $args z2_row_defconfig&&make $args
 	if [ $? -ne 0 ]; then
     terminate "Error while building for z2_row!"
     fi
-	mkzip "z2_row"
+	mkzip "z2_row-${1}"
 }
 
 mkzip (){
@@ -131,15 +129,27 @@ EOF
     echo "Ftp uploading done!"
 }
 
-
-	build_z2_plus
+	clean
+	for p in patches/*
+	do
+	git apply ${p}
+	build_z2_plus ${p##*/}
 	
 	for i in 68 72 75
 	do
-	build_z2_plus_oc ${i}
+	build_z2_plus_oc ${i} ${p##*/}
+	done
+	git reset --hard
 	done
 	
-	build_z2_row
+	clean
+	for p in patches/*
+	do
+	git apply ${p}
+	build_z2_row ${p##*/}
+	git reset --hard
+	done
+
 	END=$(date +"%s")
 	KDURATION=`expr $END - $START`
 	tg_notify "Build finished for #${DRONE_BUILD_NUMBER} ( ${date} ).  ( Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
