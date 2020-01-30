@@ -937,10 +937,9 @@ static ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf)
 {
 	return get_Voltages(buf);
 }
-extern ssize_t set_Voltages(const char *buf, size_t count);
 static ssize_t store_UV_mV_table(struct cpufreq_policy *policy, const char *buf, size_t count)
 {
-	return set_Voltages(buf, count);
+	return count;
 }
 #endif
 
