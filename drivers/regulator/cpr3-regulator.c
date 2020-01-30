@@ -4522,49 +4522,6 @@ int cpr_regulator_get_last_voltage(struct regulator *regulator,
 
 	return -EINVAL;
 }
-
-int cpr_regulator_set_ceiling_voltage(struct regulator *regulator,
-		int cori, int volt)
-{
-	struct cpr3_regulator *cpr_vreg = regulator_get_drvdata(regulator);
-	cori--;
-	if (cori >= 0 && cori < cpr_vreg->corner_count) {
-		mutex_lock(&cpr_vreg->thread->ctrl->lock);
-		cpr_vreg->corner[cori].ceiling_volt = volt;
-		mutex_unlock(&cpr_vreg->thread->ctrl->lock);
-		return 0;
-	}
-
-	return -EINVAL;
-}
-int cpr_regulator_set_floor_voltage(struct regulator *regulator,
-		int cori, int volt)
-{
-	struct cpr3_regulator *cpr_vreg = regulator_get_drvdata(regulator);
-	cori--;
-	if (cori >= 0 && cori < cpr_vreg->corner_count) {
-		mutex_lock(&cpr_vreg->thread->ctrl->lock);
-		cpr_vreg->corner[cori].floor_volt = volt;
-		mutex_unlock(&cpr_vreg->thread->ctrl->lock);
-		return 0;
-	}
-
-	return -EINVAL;
-}
-int cpr_regulator_set_last_voltage(struct regulator *regulator,
-		int cori, int volt)
-{
-	struct cpr3_regulator *cpr_vreg = regulator_get_drvdata(regulator);
-	cori--;
-	if (cori >= 0 && cori < cpr_vreg->corner_count) {
-		mutex_lock(&cpr_vreg->thread->ctrl->lock);
-		cpr_vreg->corner[cori].last_volt = volt;
-		mutex_unlock(&cpr_vreg->thread->ctrl->lock);
-		return 0;
-	}
-
-	return -EINVAL;
-}
 #endif
 
 /**
