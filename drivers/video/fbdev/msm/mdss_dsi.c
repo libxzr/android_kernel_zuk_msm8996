@@ -27,6 +27,7 @@
 #include <linux/msm-bus.h>
 #include <linux/pm_qos.h>
 #include <linux/dma-buf.h>
+#include <linux/kmod.h>
 
 #include "mdss.h"
 #include "mdss_panel.h"
@@ -2921,6 +2922,8 @@ static struct attribute_group mdss_dsi_fs_attrs_group = {
 
 extern int trigger_cpufreq_underclock(void);
 extern int resume_cpufreq_underclock(void);
+static char * spectrum_envp[] = { NULL };
+static char * spectrum_argv[] = { "/bin/sh", "-c", "/bin/setprop persist.spectrum.profile `/bin/getprop persist.spectrum.profile`", NULL };
 
 static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 				  int event, void *arg)
@@ -2931,7 +2934,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	int power_state;
 	u32 mode;
 	struct mdss_panel_info *pinfo;
-	int ret;
+	int ret, sret;
 
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
@@ -2978,6 +2981,8 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
 		resume_cpufreq_underclock();
+		sret = call_usermodehelper(spectrum_argv[0], spectrum_argv, spectrum_envp, UMH_WAIT_EXEC);
+		pr_info("Re-trigger spectrum profile:%d\n", sret);
 		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;
