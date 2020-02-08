@@ -6,7 +6,7 @@ gcc_32_path="arm-linux-gnueabi-"
 source=`pwd`
 START=$(date +"%s")
 
-date="`date +"%m%d%H%M"`"
+date="R31"
 
 args="-j$(nproc --all) O=out \
 	ARCH=arm64 \
