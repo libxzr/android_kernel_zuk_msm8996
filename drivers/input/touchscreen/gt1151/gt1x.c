@@ -873,7 +873,7 @@ static int __init gt1x_ts_init(void)
 {
 	GTP_DEBUG_FUNC();
 	GTP_INFO("GTP driver installing...");
-	gt1x_wq = create_singlethread_workqueue("gt1x_wq");
+	gt1x_wq = alloc_workqueue("gt1x_wq", WQ_HIGHPRI, 0);
 	if (!gt1x_wq) {
 		GTP_ERROR("Creat workqueue failed.");
 		return -ENOMEM;
