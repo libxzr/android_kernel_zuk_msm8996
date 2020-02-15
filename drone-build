@@ -1,5 +1,5 @@
 #!/bin/bash
-clang_path="${HOME}/linux-x86/clang-r377782b/bin/clang"
+clang_path="${HOME}/linux-x86/clang-r377782b/bin"
 gcc_path="aarch64-linux-gnu-"
 gcc_32_path="arm-linux-gnueabi-"
 
@@ -42,9 +42,15 @@ print "You are building a snapshot version:$date" yellow
 
 args+="LOCALVERSION=-$date "
 
-args+="CC=$clang_path \
-	CLANG_TRIPLE=aarch64-linux-gnu- \
-	CROSS_COMPILE=$gcc_path "
+args+="CC=${clang_path}/clang \
+CLANG_TRIPLE=aarch64-linux-gnu- \
+LLVM_AR=${clang_path}/llvm-ar \
+LLVM_NM=${clang_path}/llvm-nm \
+LD=${clang_path}/ld.lld \
+OBJCOPY=${clang_path}/llvm-objcopy \
+OBJDUMP=${clang_path}/llvm-objdump \
+STRIP=${clang_path}/llvm-strip \
+CROSS_COMPILE=$gcc_path "
 
 args+="CROSS_COMPILE_ARM32=$gcc_32_path "
 
