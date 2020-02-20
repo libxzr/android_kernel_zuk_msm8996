@@ -68,7 +68,10 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 	else
 		freq = CONFIG_MAX_BOOST_FREQ_PERF;
 
-	return min(freq, policy->max);
+    if (freq)
+	    return min(freq, policy->max);
+	else
+	    return policy->max;
 }
 
 static void update_online_cpu_policy(void)
