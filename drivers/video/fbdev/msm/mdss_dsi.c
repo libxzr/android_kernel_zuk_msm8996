@@ -28,6 +28,7 @@
 #include <linux/pm_qos.h>
 #include <linux/dma-buf.h>
 #include <linux/kmod.h>
+#include <linux/boost_control.h>
 
 #include "mdss.h"
 #include "mdss_panel.h"
@@ -2980,7 +2981,8 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
 		resume_cpufreq_underclock();
-		call_usermodehelper(spectrum_argv[0], spectrum_argv, spectrum_envp, UMH_NO_WAIT);
+		if (!unlock_custom_perf)
+			call_usermodehelper(spectrum_argv[0], spectrum_argv, spectrum_envp, UMH_NO_WAIT);
 		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;

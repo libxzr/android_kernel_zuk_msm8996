@@ -41,3 +41,6 @@ module_param_named(app_launch_boost_ms, app_launch_boost_ms, short, 0644);
 
 u16 lmk_boost_ms=100;
 module_param_named(lmk_boost_ms, lmk_boost_ms, short, 0644);
+
+bool unlock_custom_perf=false;
+module_param_named(unlock_custom_perf, unlock_custom_perf, bool, 0644);
