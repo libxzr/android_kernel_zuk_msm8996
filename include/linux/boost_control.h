@@ -24,4 +24,5 @@ extern u16 dynamic_stune_boost;
 #endif
 extern u16 app_launch_boost_ms;
 extern u16 lmk_boost_ms;
+extern bool unlock_custom_perf;
 #endif
