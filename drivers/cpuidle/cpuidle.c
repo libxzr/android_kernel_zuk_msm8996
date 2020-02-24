@@ -7,6 +7,10 @@
  *
  * This code is licenced under the GPL.
  */
+ 
+#if defined(CONFIG_ANDROID) && !defined(CONFIG_DEBUG_FS)
+#define CONFIG_DEBUG_FS
+#endif
 
 #include <linux/clockchips.h>
 #include <linux/kernel.h>
