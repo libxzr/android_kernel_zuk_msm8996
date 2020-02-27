@@ -14,6 +14,7 @@
 #include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 #include <linux/boost_control.h>
+#include <linux/android_helper.h>
 
 /* The minimum number of pages to free per reclaim */
 #define MIN_FREE_PAGES (CONFIG_ANDROID_SIMPLE_LMK_MINFREE * SZ_1M / PAGE_SIZE)
@@ -31,7 +32,7 @@ struct victim_info {
 };
 
 /* Pulled from the Android framework. Lower adj means higher priority. */
-static const short adjs[] = {
+static const short adjs_ten[] = {
 	1000, /* CACHED_APP_MAX_ADJ + 1 */
 	950,  /* CACHED_APP_LMK_FIRST_ADJ */
 	900,  /* CACHED_APP_MIN_ADJ */
@@ -46,6 +47,25 @@ static const short adjs[] = {
 	100,  /* VISIBLE_APP_ADJ */
 	50,   /* PERCEPTIBLE_RECENT_FOREGROUND_APP_ADJ */
 	0     /* FOREGROUND_APP_ADJ */
+};
+
+static const short adjs_pie[] = {
+	906, /* CACHED_APP_MAX_ADJ */
+	905, /* Cached app */
+	904, /* Cached app */
+	903, /* Cached app */
+	902, /* Cached app */
+	901, /* Cached app */
+	900, /* CACHED_APP_MIN_ADJ */
+	800, /* SERVICE_B_ADJ */
+	700, /* PREVIOUS_APP_ADJ */
+	600, /* HOME_APP_ADJ */
+	500, /* SERVICE_ADJ */
+	400, /* HEAVY_WEIGHT_APP_ADJ */
+	300, /* BACKUP_APP_ADJ */
+	200, /* PERCEPTIBLE_APP_ADJ */
+	100, /* VISIBLE_APP_ADJ */
+	0    /* FOREGROUND_APP_ADJ */
 };
 
 static struct victim_info victims[MAX_VICTIMS];
@@ -173,6 +193,16 @@ static void scan_and_kill(unsigned long pages_needed)
 {
 	int i, nr_to_kill = 0, nr_victims = 0, ret;
 	unsigned long pages_found = 0;
+	const short *real_adjs;
+	unsigned int real_size;
+
+	if (android_sdk_version >= 29) {
+		real_adjs = adjs_ten;
+		real_size = ARRAY_SIZE(adjs_ten);
+	} else {
+		real_adjs = adjs_pie;
+		real_size = ARRAY_SIZE(adjs_pie);
+	}
 
 	/*
 	 * Hold the tasklist lock so tasks don't disappear while scanning. This
@@ -180,8 +210,8 @@ static void scan_and_kill(unsigned long pages_needed)
 	 * is guaranteed to be up to date.
 	 */
 	read_lock(&tasklist_lock);
-	for (i = 1; i < ARRAY_SIZE(adjs); i++) {
-		pages_found += find_victims(&nr_victims, adjs[i], adjs[i - 1]);
+	for (i = 1; i < real_size; i++) {
+		pages_found += find_victims(&nr_victims, real_adjs[i], real_adjs[i - 1]);
 		if (pages_found >= pages_needed || nr_victims == MAX_VICTIMS)
 			break;
 	}
