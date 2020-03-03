@@ -517,7 +517,7 @@ static unsigned int *resolve_data (const char *buf, int *num_ret,size_t count)
 	while ((cp = strpbrk(cp + 1, " ")))
 		num++;
 
-	output = kmalloc(num * sizeof(unsigned int), GFP_KERNEL);
+	output = kzalloc(num * sizeof(unsigned int), GFP_KERNEL);
 
 	cp = buf;
 	i = 0;
