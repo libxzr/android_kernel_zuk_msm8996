@@ -842,6 +842,8 @@ static void sugov_tunables_save(struct cpufreq_policy *policy,
 	cached->iowait_boost_enable = tunables->iowait_boost_enable;
 	cached->efficient_freq = tunables->efficient_freq;
 	cached->up_delay = tunables->up_delay;
+	cached->nefficient_freq = tunables->nefficient_freq;
+	cached->nup_delay = tunables->nup_delay;
 }
 
 static void sugov_tunables_free(struct sugov_tunables *tunables)
@@ -866,6 +868,8 @@ static void sugov_tunables_restore(struct cpufreq_policy *policy)
 	tunables->iowait_boost_enable = cached->iowait_boost_enable;
 	tunables->efficient_freq = cached->efficient_freq;
 	tunables->up_delay = cached->up_delay;
+	tunables->nefficient_freq = cached->nefficient_freq;
+	tunables->nup_delay = cached->nup_delay;
 	
 	sg_policy->up_rate_delay_ns =
 		tunables->up_rate_limit_us * NSEC_PER_USEC;
