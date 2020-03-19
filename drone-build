@@ -129,6 +129,26 @@ EOF
     echo "Ftp uploading done!"
 }
 
+sftp_upload(){
+cd ${HOME}
+lftp <<EOF
+    set sftp:auto-confirm yes
+    open sftp://${sftp_server}
+    user ${sftp_username} ${sftp_pwd}
+    cd upload
+    mkdir zuk
+    cd zuk
+    mkdir Nameless-Kernel
+    cd Nameless-Kernel
+    mkdir ${date}
+    cd ${date}
+    mput *Nameless*.zip
+    bye
+EOF
+
+    echo "Sftp uploading done!"
+}
+
 	clean
 	for p in patches/*
 	do
@@ -154,3 +174,4 @@ EOF
 	KDURATION=`expr $END - $START`
 	tg_notify "Build finished for #${DRONE_BUILD_NUMBER} ( ${date} ).  ( Duration `expr $KDURATION / 60` m `expr $KDURATION % 60` s )"
 	ftp_upload
+	sftp_upload
