@@ -89,7 +89,7 @@ build_z2_row(){
 }
 
 mkzip (){
-	zipname="(${1})Nameless Kernel[4.4-EAS] $date.zip"
+	zipname="(${1})Nameless-Kernel[4.4-EAS]-$date.zip"
 	cp -f out/arch/arm64/boot/Image.gz-dtb ~/AnyKernel2
 	cd ~/AnyKernel2
 	git checkout z2/eas
