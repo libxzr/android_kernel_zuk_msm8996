@@ -1,7 +1,7 @@
 #!/bin/bash
-clang_path="${HOME}/linux-x86/clang-r377782c/bin/clang"
-gcc_path="aarch64-linux-gnu-"
-gcc_32_path="arm-linux-gnueabi-"
+clang_path="${HOME}/cbl/bin/clang"
+gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
+gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
 source=`pwd`
 START=$(date +"%s")
