@@ -9,8 +9,7 @@ START=$(date +"%s")
 date="`date +"%m%d%H%M"`"
 
 args="-j$(nproc --all) O=out \
-	ARCH=arm64 \
-	SUBARCH=arm64 "
+	ARCH=arm64 "
 
 print (){
 case ${2} in
