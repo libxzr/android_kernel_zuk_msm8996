@@ -112,7 +112,12 @@ if [ $tc == "clang" ]
 then
 args+="CC=$clang_path \
 	CLANG_TRIPLE=aarch64-linux-gnu- \
-	CROSS_COMPILE=$gcc_path "
+	CROSS_COMPILE=$gcc_path \
+	AR=${DIR}/proton-clang/bin/llvm-ar \
+	NM=${DIR}/proton-clang/bin/llvm-nm \
+	OBJCOPY=${DIR}/proton-clang/bin/llvm-objcopy \
+	OBJDUMP=${DIR}/proton-clang/bin/llvm-objdump \
+	STRIP=${DIR}/proton-clang/bin/llvm-strip"
 fi
 
 if [ $tc == "gcc4" ]
