@@ -142,6 +142,10 @@ static inline void set_mems_allowed(nodemask_t nodemask)
 	task_unlock(current);
 }
 
+
+extern void do_idle_bg_cpuset(void);
+extern void do_busy_bg_cpuset(void);
+
 #else /* !CONFIG_CPUSETS */
 
 static inline bool cpusets_enabled(void) { return false; }
