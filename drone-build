@@ -6,7 +6,7 @@ gcc_32_path="${HOME}/proton-clang/bin/arm-linux-gnueabi-"
 source=`pwd`
 START=$(date +"%s")
 
-date="`date +"%m%d%H%M"`"
+date="halium-`date +"%m%d%H%M"`"
 
 args="-j$(nproc --all) O=out \
 	ARCH=arm64 "
