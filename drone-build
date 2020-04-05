@@ -41,9 +41,7 @@ print "You are building a snapshot version:$date" yellow
 
 args+="LOCALVERSION=-$date "
 
-args+="CC=$clang_path \
-	CLANG_TRIPLE=aarch64-linux-gnu- \
-	CROSS_COMPILE=$gcc_path "
+args+="CROSS_COMPILE=$gcc_path "
 
 args+="CROSS_COMPILE_ARM32=$gcc_32_path "
 
