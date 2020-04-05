@@ -1799,7 +1799,7 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 	struct cpumask *lowest_mask = this_cpu_cpumask_var_ptr(local_cpu_mask);
 	int this_cpu = smp_processor_id();
 	int cpu      = task_cpu(task);
-	bool boosted, prefer_idle;
+	bool boosted, prefer_idle = 0;
 
 	/* Make sure the mask is initialized first */
 	if (unlikely(!lowest_mask))
@@ -1828,7 +1828,6 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 	 */
 
 	boosted = schedtune_task_boost(task) > 0;
-	prefer_idle = schedtune_prefer_idle(task) > 0;
 	if(boosted || prefer_idle) {
 		return find_best_rt_target(task, cpu, lowest_mask, boosted, prefer_idle);
 	} else {
@@ -1854,8 +1853,7 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 					/* Ensuring that boosted/prefer idle
 					 * tasks are not pre-empted even if low
 					 * priority*/
-					if (!curr || (schedtune_task_boost(curr) == 0
-					    && schedtune_prefer_idle(curr) == 0)) {
+					if (!curr || schedtune_task_boost(curr) == 0) {
 						rcu_read_unlock();
 						return this_cpu;
 					}
@@ -1868,8 +1866,7 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 					/* Ensuring that boosted/prefer idle
 					 * tasks are not pre-empted even if low
 					 * priority*/
-					if(!curr || (schedtune_task_boost(curr) == 0
-						     && schedtune_prefer_idle(curr) == 0)) {
+					if(!curr || schedtune_task_boost(curr) == 0) {
 						rcu_read_unlock();
 						return best_cpu;
 					}
