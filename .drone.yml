@@ -22,12 +22,6 @@ steps:
         from_secret: ftp_username
       ftp_pwd:
         from_secret: ftp_pwd
-      sftp_server:
-        from_secret: sftp_server
-      sftp_username:
-        from_secret: sftp_username
-      sftp_pwd:
-        from_secret: sftp_pwd
     commands:
       - export HOME=/drone
       - ./drone-setup
