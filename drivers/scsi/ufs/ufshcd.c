@@ -1457,7 +1457,6 @@ int ufshcd_hold(struct ufs_hba *hba, bool async)
 	int rc = 0;
 	bool flush_result;
 	unsigned long flags;
-	bool flush_result;
 
 	if (!ufshcd_is_clkgating_allowed(hba))
 		goto out;
